@@ -5,3 +5,12 @@ authors = ["T.YAMASHITA <8256tako@googlemail.com>"]
 edition = "2018"
 
 [dependencies]
+chrono = { version = "0.4", features = ["serde"] }
+dotenv = "0.13.0"
+failure = "0.1.5"
+rand = "0.6"
+isocountry = "0.2.0"
+reqwest = "0.9.12"
+serde = "1.0"
+serde_derive = "1.0"
+serde_json = "1.0"
