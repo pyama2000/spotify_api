@@ -2,7 +2,7 @@ use crate::Client;
 use chrono::serde::ts_milliseconds::deserialize as from_millis_ts;
 use chrono::{DateTime, Utc};
 use serde::de::DeserializeOwned;
-use serde_derive::Deserialize;
+use serde_derive::{Deserialize, Serialize};
 use std::convert::From;
 use std::fmt;
 
@@ -42,7 +42,7 @@ fn get_paging_object<T: DeserializeOwned>(
     response.json().unwrap()
 }
 
-#[derive(Deserialize, Clone, Debug, Default)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct Album {
     pub album_type: String,
     pub artists: Vec<Artist>,
@@ -65,7 +65,7 @@ pub struct Album {
     pub uri: String,
 }
 
-#[derive(Deserialize, Clone, Debug, Default)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct Artist {
     pub external_urls: ExternalURL,
     pub followers: Option<Follower>,
@@ -80,7 +80,7 @@ pub struct Artist {
     pub uri: String,
 }
 
-#[derive(Deserialize, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Deserialize, Serialize, Clone, PartialEq, PartialOrd, Debug)]
 pub struct AudioAnalysis {
     pub bars: Vec<TimeInterval>,
     pub beats: Vec<TimeInterval>,
@@ -89,7 +89,7 @@ pub struct AudioAnalysis {
     pub tatums: Vec<TimeInterval>,
 }
 
-#[derive(Deserialize, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Deserialize, Serialize, Clone, PartialEq, PartialOrd, Debug)]
 pub struct AudioFeature {
     pub duration_ms: u32,
     pub key: u32,
@@ -112,7 +112,7 @@ pub struct AudioFeature {
     pub object_type: String,
 }
 
-#[derive(Deserialize, Clone, Debug, Default)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct Category {
     pub href: String,
     pub icons: Vec<Image>,
@@ -120,10 +120,10 @@ pub struct Category {
     pub name: String,
 }
 
-#[derive(Deserialize, Clone, Debug, Default)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct Copyrights {}
 
-#[derive(Deserialize, Clone, Debug, Default)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct Context {
     uri: String,
     href: String,
@@ -132,7 +132,7 @@ pub struct Context {
     object_type: String,
 }
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct CurrentlyPlayingContext {
     pub device: Device,
     pub repeat_state: String,
@@ -146,12 +146,12 @@ pub struct CurrentlyPlayingContext {
     pub currently_playing_type: String,
 }
 
-#[derive(Deserialize, Clone, Debug, Default)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct Cursor {
     after: Option<String>,
 }
 
-#[derive(Deserialize, Clone, Debug, Default)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct Device {
     pub id: Option<String>,
     pub is_active: bool,
@@ -209,16 +209,16 @@ impl From<&str> for DeviceType {
     }
 }
 
-#[derive(Deserialize, Clone, Debug, Default)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct ExternalID {}
 
-#[derive(Deserialize, Clone, Debug, Default)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct ExternalURL {}
 
-#[derive(Deserialize, Clone, Debug, Default)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct Follower {}
 
-#[derive(Deserialize, Clone, Debug, Default)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct Image {
     pub height: Option<u32>,
     pub url: String,
@@ -246,7 +246,7 @@ impl fmt::Display for ObjectType {
     }
 }
 
-#[derive(Deserialize, Clone, Debug, Default)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct PagingObject<T> {
     pub href: String,
     pub items: Vec<T>,
@@ -300,7 +300,7 @@ impl<T: DeserializeOwned + Clone> PagingObject<T> {
     }
 }
 
-#[derive(Deserialize, Clone, Debug, Default)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct PagingObjectWrapper<T> {
     pub paging_object: PagingObject<T>,
     access_token: String,
@@ -364,14 +364,14 @@ impl<T: DeserializeOwned + Clone> PagingObjectWrapper<T> {
     }
 }
 
-#[derive(Deserialize, Clone, Debug, Default)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct PlayHistory {
     track: Track,
     played_at: String,
     context: Option<Context>,
 }
 
-#[derive(Deserialize, Clone, Debug, Default)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct Playlist {
     pub collaborative: bool,
     pub description: Option<String>,
@@ -389,7 +389,7 @@ pub struct Playlist {
     pub uri: String,
 }
 
-#[derive(Deserialize, Clone, Debug, Default)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct PlaylistTrack {
     pub added_at: String,
     pub added_by: User,
@@ -397,13 +397,13 @@ pub struct PlaylistTrack {
     pub track: Track,
 }
 
-#[derive(Deserialize, Clone, Debug, Default)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct RecommendationResponse {
     pub seeds: Vec<RecommendationSeed>,
     pub tracks: Vec<Track>,
 }
 
-#[derive(Deserialize, Clone, Debug, Default)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct RecommendationSeed {
     #[serde(rename = "afterFilteringSize")]
     pub after_filtering_size: u32,
@@ -417,19 +417,19 @@ pub struct RecommendationSeed {
     seed_type: String,
 }
 
-#[derive(Deserialize, Clone, Debug, Default)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct SavedAlbum {
     added_at: Option<DateTime<Utc>>,
     album: Album,
 }
 
-#[derive(Deserialize, Clone, Debug, Default)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct SavedTrack {
     added_at: Option<DateTime<Utc>>,
     track: Track,
 }
 
-#[derive(Deserialize, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Deserialize, Serialize, Clone, PartialEq, PartialOrd, Debug)]
 pub struct Section {
     #[serde(flatten)]
     pub time_interval: TimeInterval,
@@ -444,7 +444,7 @@ pub struct Section {
     pub time_signature_confidence: f64,
 }
 
-#[derive(Deserialize, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Deserialize, Serialize, Clone, PartialEq, PartialOrd, Debug)]
 pub struct Segment {
     #[serde(flatten)]
     pub time_interval: TimeInterval,
@@ -456,20 +456,20 @@ pub struct Segment {
     pub timbre: Vec<f64>,
 }
 
-#[derive(Deserialize, Clone, Debug, Default)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct Snapshot {
     #[serde(rename = "snapshot_id")]
     pub id: String,
 }
 
-#[derive(Deserialize, Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Deserialize, Serialize, Clone, PartialEq, PartialOrd, Debug)]
 pub struct TimeInterval {
     pub start: f64,
     pub duration: f64,
     pub confidence: f64,
 }
 
-#[derive(Deserialize, Clone, Debug, Default)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct Track {
     pub album: Option<Album>,
     pub artists: Vec<Artist>,
@@ -492,7 +492,7 @@ pub struct Track {
     pub is_local: bool,
 }
 
-#[derive(Deserialize, Clone, Debug, Default)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct User {
     pub birthdate: Option<String>,
     pub country: Option<String>,
