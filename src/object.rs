@@ -389,9 +389,9 @@ pub struct Playlist {
     pub uri: String,
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug, Default)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct PlaylistTrack {
-    pub added_at: String,
+    pub added_at: DateTime<Utc>,
     pub added_by: User,
     pub is_local: bool,
     pub track: Track,
