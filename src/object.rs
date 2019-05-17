@@ -216,7 +216,10 @@ pub struct ExternalID {}
 pub struct ExternalURL {}
 
 #[derive(Deserialize, Serialize, Clone, Debug, Default)]
-pub struct Follower {}
+pub struct Follower {
+    pub href: Option<String>,
+    pub total: u32,
+}
 
 #[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct Image {
