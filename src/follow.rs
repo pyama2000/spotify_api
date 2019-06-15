@@ -70,7 +70,7 @@ impl FollowClient {
         );
         let mut list = Vec::new();
         if user_ids.len() > 5 {
-            let mut drained: Vec<&str> = user_ids.drain(..5).collect(); 
+            let mut drained: Vec<&str> = user_ids.drain(..5).collect();
             list.append(&mut self.check_users_following_playlist(playlist_id, &mut drained));
             list.append(&mut self.check_users_following_playlist(playlist_id, user_ids));
         }

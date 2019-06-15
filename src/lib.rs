@@ -1,5 +1,6 @@
 pub mod album;
 pub mod artist;
+pub mod r#async;
 pub mod authentication;
 pub mod browse;
 pub mod follow;
@@ -49,7 +50,6 @@ trait Client {
             .bearer_auth(&self.get_access_token())
             .send()
             .unwrap();
-
         match response.status() {
             StatusCode::OK
             | StatusCode::CREATED

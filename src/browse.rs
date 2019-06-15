@@ -126,8 +126,7 @@ impl BrowseClient {
         let mut response = self.send(request).unwrap();
         let json_text = response.text().unwrap();
         let message: String = get_value(&json_text, "message").unwrap();
-        let paging_object: PagingObject<Playlist> =
-            get_value(&json_text, "playlists").unwrap();
+        let paging_object: PagingObject<Playlist> = get_value(&json_text, "playlists").unwrap();
         let wrapper = PagingObjectWrapper::new(
             paging_object,
             &self.get_access_token(),
