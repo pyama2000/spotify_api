@@ -98,6 +98,18 @@ impl SpotifyOAuth {
         }
     }
 
+    pub fn get_redirect_uri(&self) -> &str {
+        &self.redirect_uri
+    }
+
+    pub fn get_state(&self) -> &str {
+        &self.state
+    }
+
+    pub fn get_scopes(&self) -> &[Scope] {
+        &self.scopes
+    }
+
     pub fn set_scopes(&mut self, scopes: &[Scope]) -> &mut Self {
         self.scopes = scopes.to_vec();
         self
