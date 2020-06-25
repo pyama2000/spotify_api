@@ -7,6 +7,7 @@ use chrono::{DateTime, Utc};
 use reqwest;
 use reqwest::header::{HeaderMap, CONTENT_LENGTH, CONTENT_TYPE};
 use reqwest::Method;
+use reqwest::StatusCode;
 use serde::Deserialize;
 use serde_json::json;
 use std::fmt;
@@ -109,15 +110,21 @@ impl PlayerClient {
         response.json().unwrap()
     }
 
-    pub fn get_currently_playing_track(&mut self, market: Option<CountryCode>) -> CurrentlyPlayingTrackResponse {
+    pub fn get_currently_playing_track(
+        &mut self,
+        market: Option<CountryCode>,
+    ) -> Option<CurrentlyPlayingTrackResponse> {
         let market = market.map_or("from_token".to_string(), |v| v.alpha2().to_string());
         let request = reqwest::Client::new()
             .get("https://api.spotify.com/v1/me/player/currently-playing")
             .query(&[("market", market)]);
         let mut response = self.send(request).unwrap();
-        dbg!(&response);
 
-        response.json().unwrap()
+        match response.status() {
+            StatusCode::OK => response.json().unwrap(),
+            StatusCode::NO_CONTENT => None,
+            _ => None,
+        }
     }
 
     pub fn get_recently_played_track(
