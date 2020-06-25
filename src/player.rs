@@ -57,13 +57,13 @@ impl fmt::Display for RepeatState {
 
 #[derive(Debug, Deserialize)]
 pub struct CurrentlyPlayingTrackResponse {
-    context: Option<serde_json::Value>,
-    timestamp: usize,
-    progress_ms: Option<u32>,
-    is_playing: bool,
-    item: Option<serde_json::Value>,
-    currently_playing_type: String,
-    actions: serde_json::Value,
+    pub context: Option<serde_json::Value>,
+    pub timestamp: usize,
+    pub progress_ms: Option<u32>,
+    pub is_playing: bool,
+    pub item: Option<serde_json::Value>,
+    pub currently_playing_type: String,
+    pub actions: serde_json::Value,
 }
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
