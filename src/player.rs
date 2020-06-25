@@ -7,6 +7,7 @@ use chrono::{DateTime, Utc};
 use reqwest;
 use reqwest::header::{HeaderMap, CONTENT_LENGTH, CONTENT_TYPE};
 use reqwest::Method;
+use serde::Deserialize;
 use serde_json::json;
 use std::fmt;
 
@@ -53,6 +54,17 @@ impl fmt::Display for RepeatState {
     }
 }
 
+#[derive(Debug, Deserialize)]
+pub struct CurrentlyPlayingTrackResponse {
+    context: serde_json::Value,
+    timestamp: u32,
+    progress_ms: u32,
+    is_playing: bool,
+    item: serde_json::Value,
+    currently_playing_type: String,
+    actions: serde_json::Value,
+}
+
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct PlayerClient {
     access_token: String,
@@ -94,6 +106,16 @@ impl PlayerClient {
             .get("https://api.spotify.com/v1/me/player")
             .query(&[("market", market)]);
         let mut response = self.send(request).unwrap();
+        response.json().unwrap()
+    }
+
+    pub fn get_currently_playing_track(&mut self, market: Option<CountryCode>) -> CurrentlyPlayingTrackResponse {
+        let market = market.map_or("from_token".to_string(), |v| v.alpha2().to_string());
+        let request = reqwest::Client::new()
+            .get("https://api.spotify.com/v1/me/player/currently-playing")
+            .query(&[("market", market)]);
+        let mut response = self.send(request).unwrap();
+
         response.json().unwrap()
     }
 
