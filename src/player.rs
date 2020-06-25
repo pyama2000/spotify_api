@@ -56,11 +56,11 @@ impl fmt::Display for RepeatState {
 
 #[derive(Debug, Deserialize)]
 pub struct CurrentlyPlayingTrackResponse {
-    context: serde_json::Value,
+    context: Option<serde_json::Value>,
     timestamp: u32,
-    progress_ms: u32,
+    progress_ms: Option<u32>,
     is_playing: bool,
-    item: serde_json::Value,
+    item: Option<serde_json::Value>,
     currently_playing_type: String,
     actions: serde_json::Value,
 }
@@ -115,6 +115,7 @@ impl PlayerClient {
             .get("https://api.spotify.com/v1/me/player/currently-playing")
             .query(&[("market", market)]);
         let mut response = self.send(request).unwrap();
+        dbg!(&response);
 
         response.json().unwrap()
     }
