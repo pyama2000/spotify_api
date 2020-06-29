@@ -1,10 +1,11 @@
+use std::env;
+use std::fmt;
+
 use dotenv::dotenv;
 use failure::Error;
 use rand::{self, distributions::Alphanumeric, Rng};
 use reqwest;
-use serde_derive::Deserialize;
-use std::env;
-use std::fmt;
+use serde::Deserialize;
 
 #[derive(Default)]
 struct ClientCredential {
@@ -159,40 +160,42 @@ fn generate_random_string(length: usize) -> String {
         .collect()
 }
 
-pub fn refresh_access_token(refresh_token: &str) -> Result<String, Error> {
+pub async fn refresh_access_token(refresh_token: &str) -> Result<String, Error> {
     let credential_info = ClientCredential::new();
     let query = [
         ("grant_type", "refresh_token"),
         ("refresh_token", refresh_token),
     ];
-    let mut response = reqwest::Client::new()
+    let response = reqwest::Client::new()
         .post("https://accounts.spotify.com/api/token")
         .basic_auth(
             credential_info.client_id,
             Some(credential_info.client_secret),
         )
         .form(&query)
-        .send()?;
-    let token: Token = response.json()?;
+        .send()
+        .await?;
+    let token: Token = response.json().await?;
 
     Ok(token.access_token)
 }
 
-pub fn request_tokens(code: &str) -> Result<Token, Error> {
+pub async fn request_tokens(code: &str) -> Result<Token, Error> {
     let credential_info = ClientCredential::new();
     let query = [
         ("grant_type", "authorization_code"),
         ("code", code),
         ("redirect_uri", &credential_info.redirect_uri),
     ];
-    let mut response = reqwest::Client::new()
+    let response = reqwest::Client::new()
         .post("https://accounts.spotify.com/api/token")
         .basic_auth(
             credential_info.client_id,
             Some(credential_info.client_secret),
         )
         .form(&query)
-        .send()?;
+        .send()
+        .await?;
 
-    Ok(response.json()?)
+    Ok(response.json().await?)
 }
