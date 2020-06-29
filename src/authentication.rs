@@ -33,7 +33,6 @@ impl Credential {
 #[derive(Clone, Debug)]
 pub enum Scope {
     UserReadPrivate,
-    UserReadBirthdate,
     UserReadEmail,
     Streaming,
     AppRemoteControl,
@@ -56,7 +55,6 @@ impl fmt::Display for Scope {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Scope::UserReadPrivate => write!(f, "user-read-private"),
-            Scope::UserReadBirthdate => write!(f, "user-read-birthdate"),
             Scope::UserReadEmail => write!(f, "user-read-email"),
             Scope::Streaming => write!(f, "streaming"),
             Scope::AppRemoteControl => write!(f, "app-remote-control"),
