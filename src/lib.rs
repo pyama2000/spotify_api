@@ -1,6 +1,5 @@
 use std::error::Error;
 
-use futures::future::{BoxFuture, FutureExt};
 use reqwest::{RequestBuilder, Response, StatusCode};
 
 pub mod authentication;
@@ -20,33 +19,6 @@ impl RequestClient {
             access_token: access_token.to_string(),
             refresh_token: refresh_token.to_string(),
         }
-    }
-
-    pub fn recursive_send(
-        &'static mut self,
-        builder: RequestBuilder,
-    ) -> BoxFuture<'static, Result<Option<Response>, Box<dyn Error>>> {
-        async move {
-            let response = builder
-                .try_clone()
-                .unwrap()
-                .bearer_auth(&self.access_token)
-                .send()
-                .await?;
-
-            match response.status() {
-                StatusCode::ACCEPTED
-                | StatusCode::CREATED
-                | StatusCode::NO_CONTENT
-                | StatusCode::OK => Ok(Some(response)),
-                StatusCode::UNAUTHORIZED => {
-                    self.access_token = refresh_access_token(&self.refresh_token).await?;
-                    self.recursive_send(builder).await
-                }
-                _ => Ok(None),
-            }
-        }
-        .boxed()
     }
 
     pub async fn send(
