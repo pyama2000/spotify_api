@@ -8,13 +8,13 @@ use reqwest;
 use serde::Deserialize;
 
 #[derive(Default)]
-struct ClientCredential {
+struct Credential {
     client_id: String,
     client_secret: String,
     redirect_uri: String,
 }
 
-impl ClientCredential {
+impl Credential {
     fn new() -> Self {
         dotenv().ok();
 
@@ -22,7 +22,7 @@ impl ClientCredential {
         let client_secret = env::var("CLIENT_SECRET").expect("CLIENT_SECRET must be set");
         let redirect_uri = env::var("REDIRECT_URI").expect("REDIRECT_URI must be set");
 
-        ClientCredential {
+        Credential {
             client_id,
             client_secret,
             redirect_uri,
@@ -30,7 +30,7 @@ impl ClientCredential {
     }
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+#[derive(Clone, Debug)]
 pub enum Scope {
     UserReadPrivate,
     UserReadBirthdate,
@@ -77,7 +77,7 @@ impl fmt::Display for Scope {
     }
 }
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+#[derive(Debug)]
 pub struct SpotifyOAuth {
     client_id: String,
     redirect_uri: String,
@@ -88,7 +88,7 @@ pub struct SpotifyOAuth {
 
 impl SpotifyOAuth {
     pub fn new() -> Self {
-        let credential_info = ClientCredential::new();
+        let credential_info = Credential::new();
 
         SpotifyOAuth {
             client_id: credential_info.client_id,
@@ -161,7 +161,7 @@ fn generate_random_string(length: usize) -> String {
 }
 
 pub async fn refresh_access_token(refresh_token: &str) -> Result<String, Error> {
-    let credential_info = ClientCredential::new();
+    let credential_info = Credential::new();
     let query = [
         ("grant_type", "refresh_token"),
         ("refresh_token", refresh_token),
@@ -181,7 +181,7 @@ pub async fn refresh_access_token(refresh_token: &str) -> Result<String, Error> 
 }
 
 pub async fn request_tokens(code: &str) -> Result<Token, Error> {
-    let credential_info = ClientCredential::new();
+    let credential_info = Credential::new();
     let query = [
         ("grant_type", "authorization_code"),
         ("code", code),
