@@ -2,6 +2,7 @@ use std::error::Error;
 
 use reqwest::{RequestBuilder, Response, StatusCode};
 
+pub mod album;
 pub mod authentication;
 use authentication::refresh_access_token;
 
