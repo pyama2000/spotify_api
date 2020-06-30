@@ -22,7 +22,7 @@ pub struct Album {
     pub popularity: u32,
     pub release_date: String,
     pub release_date_precision: String,
-    // pub tracks: Option<PagingObject<Track>>,
+    // pub tracks: PagingObject<Track>,
     #[serde(rename = "type")]
     pub object_type: String,
     pub uri: String,
@@ -43,16 +43,32 @@ impl AlbumClient {
     pub async fn get_album(&mut self, request: GetAlbumRequest) -> Result<Album, Box<dyn Error>> {
         let url = format!("https://api.spotify.com/v1/albums/{}", request.id);
         let builder = reqwest::Client::new().get(&url);
-        let response: Album = self
+        let response = self
             .client
             .set_market(request.market)
             .send(builder)
             .await?
-            .unwrap()
-            .json()
-            .await?;
+            .unwrap();
 
-        Ok(response)
+        Ok(response.json().await?)
+    }
+
+    pub async fn get_albums(
+        &mut self,
+        request: GetAlbumListRequest,
+    ) -> Result<Vec<Album>, Box<dyn Error>> {
+        let builder = reqwest::Client::new()
+            .get("https://api.spotify.com/v1/albums")
+            .query(&[("ids", request.ids.join(","))]);
+
+        let response = self
+            .client
+            .set_market(request.market)
+            .send(builder)
+            .await?
+            .unwrap();
+
+        Ok(response.json().await?)
     }
 
     pub async fn get_tracks(
@@ -61,24 +77,28 @@ impl AlbumClient {
     ) -> Result<PagingObject<SimpleTrack>, Box<dyn Error>> {
         let url = format!("https://api.spotify.com/v1/albums/{}/tracks", request.id);
         let builder = reqwest::Client::new().get(&url);
-        let response: PagingObject<SimpleTrack> = self
+        let response = self
             .client
             .set_offset(request.offset)
             .set_limit(request.limit)
             .set_market(request.market)
             .send(builder)
             .await?
-            .unwrap()
-            .json()
-            .await?;
+            .unwrap();
 
-        Ok(response)
+        Ok(response.json().await?)
     }
 }
 
 #[derive(Debug, Default, Deserialize)]
 pub struct GetAlbumRequest {
     pub id: String,
+    pub market: Option<CountryCode>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+pub struct GetAlbumListRequest {
+    pub ids: Vec<String>,
     pub market: Option<CountryCode>,
 }
 
