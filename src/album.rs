@@ -1,5 +1,6 @@
 use std::error::Error;
 
+use futures::future::{BoxFuture, FutureExt};
 use isocountry::CountryCode;
 use serde::Deserialize;
 
@@ -53,22 +54,40 @@ impl AlbumClient {
         Ok(response.json().await?)
     }
 
-    pub async fn get_albums(
+    pub fn get_albums(
         &mut self,
-        request: GetAlbumListRequest,
-    ) -> Result<Vec<Album>, Box<dyn Error>> {
-        let builder = reqwest::Client::new()
-            .get("https://api.spotify.com/v1/albums")
-            .query(&[("ids", request.ids.join(","))]);
+        mut request: GetAlbumListRequest,
+    ) -> BoxFuture<'_, Result<GetAlbumListResponse, Box<dyn Error>>> {
+        async move {
+            let mut albums_response = GetAlbumListResponse::default();
 
-        let response = self
-            .client
-            .set_market(request.market)
-            .send(builder)
-            .await?
-            .unwrap();
+            if request.ids.len() > 20 {
+                let drained: Vec<String> = request.ids.drain(..20).collect();
+                let drained_request = GetAlbumListRequest {
+                    ids: drained,
+                    market: request.market,
+                };
+                albums_response.albums.append(&mut self.get_albums(drained_request).await?.albums);
+                albums_response.albums.append(&mut self.get_albums(request.clone()).await?.albums);
+            }
 
-        Ok(response.json().await?)
+            let builder = reqwest::Client::new()
+                .get("https://api.spotify.com/v1/albums")
+                .query(&[("ids", request.ids.join(","))]);
+
+            let response = self
+                .client
+                .set_market(request.market)
+                .send(builder)
+                .await?
+                .unwrap();
+
+            let mut values: GetAlbumListResponse  = response.json().await?;
+            albums_response.albums.append(&mut values.albums);
+
+            Ok(albums_response)
+        }
+        .boxed()
     }
 
     pub async fn get_tracks(
@@ -96,10 +115,15 @@ pub struct GetAlbumRequest {
     pub market: Option<CountryCode>,
 }
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize)]
 pub struct GetAlbumListRequest {
     pub ids: Vec<String>,
     pub market: Option<CountryCode>,
+}
+
+#[derive(Clone, Debug, Default, Deserialize)]
+pub struct GetAlbumListResponse {
+    pub albums: Vec<Album>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -110,49 +134,6 @@ pub struct GetTrackListRequest {
     pub market: Option<CountryCode>,
 }
 
-// use crate::{generate_params, get_values, Client, CountryCode};
-// use reqwest;
-//
-// #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
-// pub struct AlbumClient {
-//     access_token: String,
-//     refresh_token: String,
-// }
-//
-// impl Client for AlbumClient {
-//     fn get_access_token(&self) -> String {
-//         self.access_token.to_string()
-//     }
-//
-//     fn get_refresh_token(&self) -> String {
-//         self.refresh_token.to_string()
-//     }
-//
-//     fn set_access_token(&mut self, access_token: &str) -> &mut Client {
-//         self.access_token = access_token.to_string();
-//         self
-//     }
-// }
-//
-// impl AlbumClient {
-//     pub fn new(access_token: &str, refresh_token: &str) -> Self {
-//         AlbumClient {
-//             access_token: access_token.to_string(),
-//             refresh_token: refresh_token.to_string(),
-//         }
-//     }
-//
-//     pub fn get_album(&mut self, album_id: &str, market: Option<CountryCode>) -> Album {
-//         let url = format!("https://api.spotify.com/v1/albums/{}", album_id);
-//         let market = market.map_or("from_token".to_string(), |v| v.alpha2().to_string());
-//         let request = reqwest::Client::new()
-//             .get(&url)
-//             .query(&[("market", market)]);
-//         let mut response = self.send(request).unwrap();
-//
-//         response.json().unwrap()
-//     }
-//
 //     pub fn get_albums(&mut self, ids: &mut Vec<&str>, market: Option<CountryCode>) -> Vec<Album> {
 //         let mut albums = Vec::new();
 //         if ids.len() > 20 {
@@ -171,27 +152,3 @@ pub struct GetTrackListRequest {
 //
 //         albums
 //     }
-//
-//     pub fn get_tracks(
-//         &mut self,
-//         album_id: &str,
-//         limit: Option<u32>,
-//         offset: Option<u32>,
-//         market: Option<CountryCode>,
-//     ) -> PagingObjectWrapper<Track> {
-//         let url = format!("https://api.spotify.com/v1/albums/{}/tracks", album_id);
-//         let market = market.map_or("from_token".to_string(), |v| v.alpha2().to_string());
-//         let mut params = generate_params(limit, offset);
-//         params.push(("market", market));
-//         let request = reqwest::Client::new().get(&url).query(&params);
-//         let mut response = self.send(request).unwrap();
-//
-//         let paging_object: PagingObject<Track> = response.json().unwrap();
-//
-//         PagingObjectWrapper::new(
-//             paging_object,
-//             &self.get_access_token(),
-//             &self.get_refresh_token(),
-//         )
-//     }
-// }
