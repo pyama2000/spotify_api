@@ -6,7 +6,9 @@ use reqwest::{RequestBuilder, Response, StatusCode};
 pub mod album;
 pub mod artist;
 pub mod authentication;
+pub mod browse;
 pub mod object;
+pub mod playlist;
 pub mod track;
 use authentication::refresh_access_token;
 
