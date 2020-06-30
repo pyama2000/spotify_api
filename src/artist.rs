@@ -92,21 +92,18 @@ impl ArtistClient {
         request: GetArtistAlbumRequest,
     ) -> Result<PagingObject<SimpleAlbum>, Box<dyn Error>> {
         let url = format!("https://api.spotify.com/v1/artists/{}/albums", request.id);
-        let mut query = Vec::new();
 
-        let country = request
-            .country
-            .map_or("from_token".to_string(), |v| v.alpha2().to_string());
-        query.push(("country", country));
-
-        if let Some(groups) = request.include_groups {
+        let query = if let Some(groups) = request.include_groups {
             let s = groups
                 .into_iter()
                 .map(|s| s.to_string())
                 .collect::<Vec<String>>()
                 .join(",");
-            query.push(("include_groups", s));
-        }
+
+            vec![("include_groups", s)]
+        } else {
+            Vec::new()
+        };
 
         let builder = reqwest::Client::new().get(&url).query(&query);
 
@@ -114,6 +111,7 @@ impl ArtistClient {
             .client
             .set_offset(request.offset)
             .set_limit(request.limit)
+            .set_country(request.country)
             .send(builder)
             .await?
             .unwrap();
