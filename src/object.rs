@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize};
 
 use crate::RequestClient;
 
@@ -16,7 +16,7 @@ async fn get_paging_object<T: DeserializeOwned>(
     Ok(response.json().await?)
 }
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize)]
 pub struct PagingObject<T> {
     pub href: String,
     pub items: Vec<T>,

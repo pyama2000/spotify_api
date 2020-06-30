@@ -4,8 +4,11 @@ use isocountry::CountryCode;
 use reqwest::{RequestBuilder, Response, StatusCode};
 
 pub mod album;
+pub mod artist;
 pub mod authentication;
+pub mod browse;
 pub mod object;
+pub mod playlist;
 pub mod track;
 use authentication::refresh_access_token;
 
@@ -17,6 +20,7 @@ pub struct RequestClient {
     offset: Option<u32>,
     limit: Option<u32>,
     market: Option<CountryCode>,
+    country: Option<CountryCode>,
 }
 
 impl RequestClient {
@@ -28,6 +32,7 @@ impl RequestClient {
             offset: None,
             limit: None,
             market: None,
+            country: None,
         }
     }
 
@@ -46,6 +51,11 @@ impl RequestClient {
         self
     }
 
+    pub fn set_country(&mut self, country: Option<CountryCode>) -> &mut Self {
+        self.country = country;
+        self
+    }
+
     pub async fn send(
         &mut self,
         mut builder: RequestBuilder,
@@ -58,6 +68,9 @@ impl RequestClient {
         }
         if let Some(market) = &self.market {
             builder = builder.query(&[("market", market.alpha2().to_string())]);
+        }
+        if let Some(country) = &self.country {
+            builder = builder.query(&[("country", country.alpha2().to_string())]);
         }
 
         loop {

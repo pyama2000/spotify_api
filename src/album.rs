@@ -4,7 +4,7 @@ use futures::future::{BoxFuture, FutureExt};
 use isocountry::CountryCode;
 use serde::Deserialize;
 
-use crate::{object::PagingObject, track::SimpleTrack, RequestClient};
+use crate::{artist::SimpleArtist, object::PagingObject, track::SimpleTrack, RequestClient};
 
 #[derive(Clone, Debug, Default, Deserialize)]
 pub struct Album {
@@ -24,6 +24,22 @@ pub struct Album {
     pub release_date: String,
     pub release_date_precision: String,
     // pub tracks: PagingObject<Track>,
+    #[serde(rename = "type")]
+    pub object_type: String,
+    pub uri: String,
+}
+
+#[derive(Clone, Debug, Default, Deserialize)]
+pub struct SimpleAlbum {
+    pub album_group: Option<String>,
+    pub album_type: String,
+    pub artists: Vec<SimpleArtist>,
+    pub available_markets: Option<Vec<String>>,
+    // pub external_urls: ExternalURL,
+    pub href: String,
+    pub id: String,
+    // pub images: Vec<Image>,
+    pub name: String,
     #[serde(rename = "type")]
     pub object_type: String,
     pub uri: String,
@@ -67,8 +83,12 @@ impl AlbumClient {
                     ids: drained,
                     market: request.market,
                 };
-                albums_response.albums.append(&mut self.get_albums(drained_request).await?.albums);
-                albums_response.albums.append(&mut self.get_albums(request.clone()).await?.albums);
+                albums_response
+                    .albums
+                    .append(&mut self.get_albums(drained_request).await?.albums);
+                albums_response
+                    .albums
+                    .append(&mut self.get_albums(request.clone()).await?.albums);
             }
 
             let builder = reqwest::Client::new()
@@ -82,7 +102,7 @@ impl AlbumClient {
                 .await?
                 .unwrap();
 
-            let mut values: GetAlbumListResponse  = response.json().await?;
+            let mut values: GetAlbumListResponse = response.json().await?;
             albums_response.albums.append(&mut values.albums);
 
             Ok(albums_response)
