@@ -142,6 +142,21 @@ impl ArtistClient {
 
         Ok(response.json().await?)
     }
+
+    pub async fn get_related_artists(
+        &mut self,
+        request: GetRelatedArtistRequest,
+    ) -> Result<GetRelatedArtistResponse, Box<dyn Error>> {
+        let url = format!(
+            "https://api.spotify.com/v1/artists/{}/related-artists",
+            request.id,
+        );
+
+        let builder = reqwest::Client::new().get(&url);
+        let response = self.client.send(builder).await?.unwrap();
+
+        Ok(response.json().await?)
+    }
 }
 
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -179,6 +194,16 @@ pub struct GetArtistTopTrackResponse {
     pub tracks: Vec<Track>,
 }
 
+#[derive(Clone, Debug, Default)]
+pub struct GetRelatedArtistRequest {
+    pub id: String,
+}
+
+#[derive(Clone, Debug, Default, Deserialize)]
+pub struct GetRelatedArtistResponse {
+    pub artists: Vec<Artist>,
+}
+
 #[derive(Clone, Debug)]
 pub enum IncludeGroup {
     Album,
@@ -197,67 +222,3 @@ impl fmt::Display for IncludeGroup {
         }
     }
 }
-
-// use crate::object::{Album, Artist, PagingObject, PagingObjectWrapper, Track};
-// use crate::{generate_params, get_values, Client, CountryCode};
-// use reqwest;
-// use std::fmt;
-//
-//     pub fn get_albums(
-//         &mut self,
-//         artist_id: &str,
-//         include_groups: Option<Vec<AlbumType>>,
-//         country: Option<CountryCode>,
-//         limit: Option<u32>,
-//         offset: Option<u32>,
-//     ) -> PagingObjectWrapper<Album> {
-//         let url = format!("https://api.spotify.com/v1/artists/{}/albums", artist_id);
-//         let country = country.map_or("from_token".to_string(), |v| v.alpha2().to_string());
-//         let mut params = generate_params(limit, offset);
-//         params.push(("country", country));
-//         if let Some(mut groups) = include_groups {
-//             groups.sort();
-//             groups.dedup();
-//             let groups_string = groups
-//                 .iter()
-//                 .map(std::string::ToString::to_string)
-//                 .collect::<Vec<String>>()
-//                 .join(",");
-//             params.push(("include_groups", groups_string));
-//         }
-//         let request = reqwest::Client::new().get(&url).query(&params);
-//         let mut response = self.send(request).unwrap();
-//         let paging_object: PagingObject<Album> = response.json().unwrap();
-//
-//         PagingObjectWrapper::new(
-//             paging_object,
-//             &self.get_access_token(),
-//             &self.get_refresh_token(),
-//         )
-//     }
-//
-//     pub fn get_top_tracks(&mut self, artist_id: &str, country: Option<CountryCode>) -> Vec<Track> {
-//         let url = format!(
-//             "https://api.spotify.com/v1/artists/{}/top-tracks",
-//             artist_id
-//         );
-//         let country = country.map_or("from_token".to_string(), |v| v.alpha2().to_string());
-//         let request = reqwest::Client::new()
-//             .get(&url)
-//             .query(&[("country", country)]);
-//         let mut response = self.send(request).unwrap();
-//
-//         get_values(&response.text().unwrap(), "tracks").unwrap()
-//     }
-//
-//     pub fn get_related_artists(&mut self, artist_id: &str) -> Vec<Artist> {
-//         let url = format!(
-//             "https://api.spotify.com/v1/artists/{}/related-artists",
-//             artist_id
-//         );
-//         let request = reqwest::Client::new().get(&url);
-//         let mut response = self.send(request).unwrap();
-//
-//         get_values(&response.text().unwrap(), "artists").unwrap()
-//     }
-// }
