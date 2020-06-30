@@ -16,7 +16,7 @@ async fn get_paging_object<T: DeserializeOwned>(
     Ok(response.json().await?)
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug, Default)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 pub struct PagingObject<T> {
     pub href: String,
     pub items: Vec<T>,

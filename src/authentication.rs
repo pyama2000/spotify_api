@@ -7,7 +7,7 @@ use rand::{self, distributions::Alphanumeric, Rng};
 use reqwest;
 use serde::Deserialize;
 
-#[derive(Default)]
+#[derive(Clone, Debug, Default)]
 struct Credential {
     client_id: String,
     client_secret: String,
@@ -75,7 +75,7 @@ impl fmt::Display for Scope {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct SpotifyOAuth {
     client_id: String,
     redirect_uri: String,
@@ -129,7 +129,7 @@ impl SpotifyOAuth {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize)]
 pub struct RequestTokenResponse {
     pub access_token: String,
     pub refresh_token: String,

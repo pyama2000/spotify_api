@@ -9,7 +9,7 @@ pub mod object;
 pub mod track;
 use authentication::refresh_access_token;
 
-#[derive(Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct RequestClient {
     client: reqwest::Client,
     access_token: String,

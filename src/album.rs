@@ -6,7 +6,7 @@ use serde::Deserialize;
 
 use crate::{object::PagingObject, track::SimpleTrack, RequestClient};
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Clone, Debug, Default, Deserialize)]
 pub struct Album {
     pub album_type: String,
     // pub artists: Vec<Artist>,
@@ -109,7 +109,7 @@ impl AlbumClient {
     }
 }
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize)]
 pub struct GetAlbumRequest {
     pub id: String,
     pub market: Option<CountryCode>,
@@ -126,7 +126,7 @@ pub struct GetAlbumListResponse {
     pub albums: Vec<Album>,
 }
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize)]
 pub struct GetTrackListRequest {
     pub id: String,
     pub limit: Option<u32>,
