@@ -1,5 +1,6 @@
 use std::error::Error;
 
+use futures::future::{BoxFuture, FutureExt};
 use serde::Deserialize;
 
 use crate::RequestClient;
@@ -31,17 +32,49 @@ impl ArtistClient {
         }
     }
 
-    pub async fn get_artist(&mut self, request: GetArtistRequest) -> Result<Artist, Box<dyn Error>> {
+    pub async fn get_artist(
+        &mut self,
+        request: GetArtistRequest,
+    ) -> Result<Artist, Box<dyn Error>> {
         let url = format!("https://api.spotify.com/v1/artists/{}", request.id);
         let builder = reqwest::Client::new().get(&url);
-        let response = self
-            .client
-            .send(builder)
-            .await?
-            .unwrap();
+        let response = self.client.send(builder).await?.unwrap();
 
         Ok(response.json().await?)
     }
+
+    pub fn get_artists(
+        &mut self,
+        mut request: GetArtistListRequest,
+    ) -> BoxFuture<'_, Result<GetArtistListResponse, Box<dyn Error>>> {
+        async move {
+            let mut artist_response = GetArtistListResponse::default();
+
+            if request.ids.len() > 50 {
+                let drained: Vec<String> = request.ids.drain(..20).collect();
+                let drained_request = GetArtistListRequest { ids: drained };
+                artist_response
+                    .artists
+                    .append(&mut self.get_artists(drained_request).await?.artists);
+                artist_response
+                    .artists
+                    .append(&mut self.get_artists(request.clone()).await?.artists);
+            }
+
+            let builder = reqwest::Client::new()
+                .get("https://api.spotify.com/v1/artists")
+                .query(&[("ids", request.ids.join(","))]);
+
+            let response = self.client.send(builder).await?.unwrap();
+
+            let mut values: GetArtistListResponse = response.json().await?;
+            artist_response.artists.append(&mut values.artists);
+
+            Ok(artist_response)
+        }
+        .boxed()
+    }
+
 }
 
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -49,11 +82,21 @@ pub struct GetArtistRequest {
     pub id: String,
 }
 
+#[derive(Clone, Debug, Default, Deserialize)]
+pub struct GetArtistListRequest {
+    pub ids: Vec<String>,
+}
+
+#[derive(Clone, Debug, Default, Deserialize)]
+pub struct GetArtistListResponse {
+    pub artists: Vec<Artist>,
+}
+
 // use crate::object::{Album, Artist, PagingObject, PagingObjectWrapper, Track};
 // use crate::{generate_params, get_values, Client, CountryCode};
 // use reqwest;
 // use std::fmt;
-// 
+//
 // #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 // pub enum AlbumType {
 //     Album,
@@ -61,7 +104,7 @@ pub struct GetArtistRequest {
 //     AppearsOn,
 //     Compilation,
 // }
-// 
+//
 // impl fmt::Display for AlbumType {
 //     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 //         match *self {
@@ -72,28 +115,28 @@ pub struct GetArtistRequest {
 //         }
 //     }
 // }
-// 
+//
 // #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 // pub struct ArtistClient {
 //     access_token: String,
 //     refresh_token: String,
 // }
-// 
+//
 // impl Client for ArtistClient {
 //     fn get_access_token(&self) -> String {
 //         self.access_token.to_string()
 //     }
-// 
+//
 //     fn get_refresh_token(&self) -> String {
 //         self.refresh_token.to_string()
 //     }
-// 
+//
 //     fn set_access_token(&mut self, access_token: &str) -> &mut Client {
 //         self.access_token = access_token.to_string();
 //         self
 //     }
 // }
-// 
+//
 // impl ArtistClient {
 //     pub fn new(access_token: &str, refresh_token: &str) -> Self {
 //         ArtistClient {
@@ -101,15 +144,15 @@ pub struct GetArtistRequest {
 //             refresh_token: refresh_token.to_string(),
 //         }
 //     }
-// 
+//
 //     pub fn get_artist(&mut self, artist_id: &str) -> Artist {
 //         let url = format!("https://api.spotify.com/v1/artists/{}", artist_id);
 //         let request = reqwest::Client::new().get(&url);
 //         let mut response = self.send(request).unwrap();
-// 
+//
 //         response.json().unwrap()
 //     }
-// 
+//
 //     pub fn get_artists(&mut self, ids: &mut Vec<&str>) -> Vec<Artist> {
 //         let mut artists = Vec::new();
 //         if ids.len() > 50 {
@@ -124,10 +167,10 @@ pub struct GetArtistRequest {
 //         let mut response = self.send(request).unwrap();
 //         let mut objects: Vec<Artist> = get_values(&response.text().unwrap(), "artists").unwrap();
 //         artists.append(&mut objects);
-// 
+//
 //         artists
 //     }
-// 
+//
 //     pub fn get_albums(
 //         &mut self,
 //         artist_id: &str,
@@ -153,14 +196,14 @@ pub struct GetArtistRequest {
 //         let request = reqwest::Client::new().get(&url).query(&params);
 //         let mut response = self.send(request).unwrap();
 //         let paging_object: PagingObject<Album> = response.json().unwrap();
-// 
+//
 //         PagingObjectWrapper::new(
 //             paging_object,
 //             &self.get_access_token(),
 //             &self.get_refresh_token(),
 //         )
 //     }
-// 
+//
 //     pub fn get_top_tracks(&mut self, artist_id: &str, country: Option<CountryCode>) -> Vec<Track> {
 //         let url = format!(
 //             "https://api.spotify.com/v1/artists/{}/top-tracks",
@@ -171,10 +214,10 @@ pub struct GetArtistRequest {
 //             .get(&url)
 //             .query(&[("country", country)]);
 //         let mut response = self.send(request).unwrap();
-// 
+//
 //         get_values(&response.text().unwrap(), "tracks").unwrap()
 //     }
-// 
+//
 //     pub fn get_related_artists(&mut self, artist_id: &str) -> Vec<Artist> {
 //         let url = format!(
 //             "https://api.spotify.com/v1/artists/{}/related-artists",
@@ -182,7 +225,7 @@ pub struct GetArtistRequest {
 //         );
 //         let request = reqwest::Client::new().get(&url);
 //         let mut response = self.send(request).unwrap();
-// 
+//
 //         get_values(&response.text().unwrap(), "artists").unwrap()
 //     }
 // }
