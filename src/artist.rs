@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use serde::Deserialize;
 
 use crate::RequestClient;
@@ -28,6 +30,23 @@ impl ArtistClient {
             client: RequestClient::new(access_token, refresh_token),
         }
     }
+
+    pub async fn get_artist(&mut self, request: GetArtistRequest) -> Result<Artist, Box<dyn Error>> {
+        let url = format!("https://api.spotify.com/v1/artists/{}", request.id);
+        let builder = reqwest::Client::new().get(&url);
+        let response = self
+            .client
+            .send(builder)
+            .await?
+            .unwrap();
+
+        Ok(response.json().await?)
+    }
+}
+
+#[derive(Clone, Debug, Default, Deserialize)]
+pub struct GetArtistRequest {
+    pub id: String,
 }
 
 // use crate::object::{Album, Artist, PagingObject, PagingObjectWrapper, Track};
