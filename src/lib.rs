@@ -7,6 +7,7 @@ pub mod album;
 pub mod artist;
 pub mod authentication;
 pub mod browse;
+pub mod follow;
 pub mod object;
 pub mod playlist;
 pub mod track;
