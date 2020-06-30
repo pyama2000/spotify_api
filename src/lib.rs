@@ -4,6 +4,7 @@ use isocountry::CountryCode;
 use reqwest::{RequestBuilder, Response, StatusCode};
 
 pub mod album;
+pub mod artist;
 pub mod authentication;
 pub mod object;
 pub mod track;
