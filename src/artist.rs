@@ -1,9 +1,10 @@
-use std::error::Error;
+use std::{error::Error, fmt};
 
 use futures::future::{BoxFuture, FutureExt};
+use isocountry::CountryCode;
 use serde::Deserialize;
 
-use crate::RequestClient;
+use crate::{album::SimpleAlbum, object::PagingObject, RequestClient};
 
 #[derive(Clone, Debug, Default, Deserialize)]
 pub struct Artist {
@@ -15,6 +16,17 @@ pub struct Artist {
     // pub images: Option<Vec<Image>>,
     pub name: String,
     pub popularity: Option<u32>,
+    #[serde(rename = "type")]
+    pub object_type: String,
+    pub uri: String,
+}
+
+#[derive(Clone, Debug, Default, Deserialize)]
+pub struct SimpleArtist {
+    // pub external_urls: ExternalURL,
+    pub href: String,
+    pub id: String,
+    pub name: String,
     #[serde(rename = "type")]
     pub object_type: String,
     pub uri: String,
@@ -75,6 +87,39 @@ impl ArtistClient {
         .boxed()
     }
 
+    pub async fn get_albums(
+        &mut self,
+        request: GetArtistAlbumRequest,
+    ) -> Result<PagingObject<SimpleAlbum>, Box<dyn Error>> {
+        let url = format!("https://api.spotify.com/v1/artists/{}/albums", request.id);
+        let mut query = Vec::new();
+
+        let country = request
+            .country
+            .map_or("from_token".to_string(), |v| v.alpha2().to_string());
+        query.push(("country", country));
+
+        if let Some(groups) = request.include_groups {
+            let s = groups
+                .into_iter()
+                .map(|s| s.to_string())
+                .collect::<Vec<String>>()
+                .join(",");
+            query.push(("include_groups", s));
+        }
+
+        let builder = reqwest::Client::new().get(&url).query(&query);
+
+        let response = self
+            .client
+            .set_offset(request.offset)
+            .set_limit(request.limit)
+            .send(builder)
+            .await?
+            .unwrap();
+
+        Ok(response.json().await?)
+    }
 }
 
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -92,84 +137,38 @@ pub struct GetArtistListResponse {
     pub artists: Vec<Artist>,
 }
 
+#[derive(Clone, Debug, Default)]
+pub struct GetArtistAlbumRequest {
+    pub id: String,
+    pub include_groups: Option<Vec<IncludeGroup>>,
+    pub country: Option<CountryCode>,
+    pub limit: Option<u32>,
+    pub offset: Option<u32>,
+}
+
+#[derive(Clone, Debug)]
+pub enum IncludeGroup {
+    Album,
+    Single,
+    AppearsOn,
+    Compilation,
+}
+
+impl fmt::Display for IncludeGroup {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            IncludeGroup::Album => write!(f, "album"),
+            IncludeGroup::Single => write!(f, "single"),
+            IncludeGroup::AppearsOn => write!(f, "appears_on"),
+            IncludeGroup::Compilation => write!(f, "compilation"),
+        }
+    }
+}
+
 // use crate::object::{Album, Artist, PagingObject, PagingObjectWrapper, Track};
 // use crate::{generate_params, get_values, Client, CountryCode};
 // use reqwest;
 // use std::fmt;
-//
-// #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-// pub enum AlbumType {
-//     Album,
-//     Single,
-//     AppearsOn,
-//     Compilation,
-// }
-//
-// impl fmt::Display for AlbumType {
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//         match *self {
-//             AlbumType::Album => write!(f, "album"),
-//             AlbumType::Single => write!(f, "single"),
-//             AlbumType::AppearsOn => write!(f, "appears_on"),
-//             AlbumType::Compilation => write!(f, "compilation"),
-//         }
-//     }
-// }
-//
-// #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
-// pub struct ArtistClient {
-//     access_token: String,
-//     refresh_token: String,
-// }
-//
-// impl Client for ArtistClient {
-//     fn get_access_token(&self) -> String {
-//         self.access_token.to_string()
-//     }
-//
-//     fn get_refresh_token(&self) -> String {
-//         self.refresh_token.to_string()
-//     }
-//
-//     fn set_access_token(&mut self, access_token: &str) -> &mut Client {
-//         self.access_token = access_token.to_string();
-//         self
-//     }
-// }
-//
-// impl ArtistClient {
-//     pub fn new(access_token: &str, refresh_token: &str) -> Self {
-//         ArtistClient {
-//             access_token: access_token.to_string(),
-//             refresh_token: refresh_token.to_string(),
-//         }
-//     }
-//
-//     pub fn get_artist(&mut self, artist_id: &str) -> Artist {
-//         let url = format!("https://api.spotify.com/v1/artists/{}", artist_id);
-//         let request = reqwest::Client::new().get(&url);
-//         let mut response = self.send(request).unwrap();
-//
-//         response.json().unwrap()
-//     }
-//
-//     pub fn get_artists(&mut self, ids: &mut Vec<&str>) -> Vec<Artist> {
-//         let mut artists = Vec::new();
-//         if ids.len() > 50 {
-//             let mut drained: Vec<&str> = ids.drain(..50).collect();
-//             artists.append(&mut self.get_artists(&mut drained));
-//             artists.append(&mut self.get_artists(ids));
-//         }
-//         let params = [("ids", ids.join(","))];
-//         let request = reqwest::Client::new()
-//             .get("https://api.spotify.com/v1/artists")
-//             .query(&params);
-//         let mut response = self.send(request).unwrap();
-//         let mut objects: Vec<Artist> = get_values(&response.text().unwrap(), "artists").unwrap();
-//         artists.append(&mut objects);
-//
-//         artists
-//     }
 //
 //     pub fn get_albums(
 //         &mut self,
