@@ -4,7 +4,7 @@ use futures::future::{BoxFuture, FutureExt};
 use isocountry::CountryCode;
 use serde::Deserialize;
 
-use crate::{album::SimpleAlbum, object::PagingObject, RequestClient};
+use crate::{album::SimpleAlbum, object::PagingObject, track::Track, RequestClient};
 
 #[derive(Clone, Debug, Default, Deserialize)]
 pub struct Artist {
@@ -120,6 +120,28 @@ impl ArtistClient {
 
         Ok(response.json().await?)
     }
+
+    pub async fn get_top_tracks(
+        &mut self,
+        request: GetArtistTopTrackRequest,
+    ) -> Result<GetArtistTopTrackResponse, Box<dyn Error>> {
+        let url = format!(
+            "https://api.spotify.com/v1/artists/{}/top-tracks",
+            request.id,
+        );
+
+        let country = request
+            .country
+            .map_or("from_token".to_string(), |v| v.alpha2().to_string());
+
+        let builder = reqwest::Client::new()
+            .get(&url)
+            .query(&[("country", country)]);
+
+        let response = self.client.send(builder).await?.unwrap();
+
+        Ok(response.json().await?)
+    }
 }
 
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -144,6 +166,17 @@ pub struct GetArtistAlbumRequest {
     pub country: Option<CountryCode>,
     pub limit: Option<u32>,
     pub offset: Option<u32>,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct GetArtistTopTrackRequest {
+    pub id: String,
+    pub country: Option<CountryCode>,
+}
+
+#[derive(Clone, Debug, Default, Deserialize)]
+pub struct GetArtistTopTrackResponse {
+    pub tracks: Vec<Track>,
 }
 
 #[derive(Clone, Debug)]
