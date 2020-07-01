@@ -156,8 +156,6 @@ pub async fn request_tokens(code: &str) -> Result<RequestTokenResponse, Error> {
         .await
         .expect("send error");
 
-    dbg!(&response);
-
     Ok(response.json().await.expect("parse error"))
 }
 

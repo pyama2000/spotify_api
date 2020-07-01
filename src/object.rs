@@ -102,7 +102,7 @@ pub struct CursorPagingObject<T> {
     pub limit: u32,
     pub next: Option<String>,
     pub cursors: Cursor,
-    pub total: u32,
+    pub total: Option<u32>,
 }
 
 impl<T: DeserializeOwned + Clone> CursorPagingObject<T> {

@@ -11,6 +11,7 @@ pub mod follow;
 pub mod library;
 pub mod object;
 pub mod personalization;
+pub mod player;
 pub mod playlist;
 pub mod track;
 use authentication::refresh_access_token;
