@@ -8,6 +8,7 @@ pub mod artist;
 pub mod authentication;
 pub mod browse;
 pub mod follow;
+pub mod library;
 pub mod object;
 pub mod playlist;
 pub mod track;
@@ -93,6 +94,8 @@ impl RequestClient {
                     self.access_token = refresh_access_token(&self.refresh_token).await?;
                 }
                 _ => {
+                    dbg!(&response);
+                    dbg!(&response.text().await?);
                     return Ok(None);
                 }
             }

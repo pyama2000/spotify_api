@@ -1,7 +1,7 @@
 extern crate spotify_api;
 
 #[cfg(test)]
-mod browse {
+mod follow {
     use spotify_api::follow::*;
 
     #[tokio::test]
