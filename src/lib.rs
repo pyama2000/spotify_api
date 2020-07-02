@@ -15,6 +15,7 @@ pub mod player;
 pub mod playlist;
 pub mod search;
 pub mod track;
+pub mod user;
 use authentication::refresh_access_token;
 
 #[derive(Clone, Debug, Default)]
