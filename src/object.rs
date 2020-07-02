@@ -133,14 +133,19 @@ impl<T: DeserializeOwned + Clone> CursorPagingObject<T> {
 
         let mut next = self.get_next(access_token, refresh_token).await?;
         while let Some(n) = next {
-            // let mut next_items = n.get_items();
-            // items.append(&mut next_items);
             items.append(&mut n.get_items());
             next = n.get_next(access_token, refresh_token).await?;
         }
 
         Ok(items)
     }
+}
+
+#[derive(Clone, Debug, Default, Deserialize)]
+pub struct Image {
+    pub height: Option<u32>,
+    pub url: String,
+    pub width: Option<u32>,
 }
 
 // #[derive(Deserialize, Serialize, Clone, Debug, Default)]
@@ -392,13 +397,6 @@ impl<T: DeserializeOwned + Clone> CursorPagingObject<T> {
 // pub struct Follower {
 //     pub href: Option<String>,
 //     pub total: u32,
-// }
-//
-// #[derive(Deserialize, Serialize, Clone, Debug, Default)]
-// pub struct Image {
-//     pub height: Option<u32>,
-//     pub url: String,
-//     pub width: Option<u32>,
 // }
 //
 // #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
