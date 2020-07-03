@@ -155,22 +155,3 @@ pub struct GetTrackListRequest {
     pub offset: Option<u32>,
     pub market: Option<CountryCode>,
 }
-
-//     pub fn get_albums(&mut self, ids: &mut Vec<&str>, market: Option<CountryCode>) -> Vec<Album> {
-//         let mut albums = Vec::new();
-//         if ids.len() > 20 {
-//             let mut drained: Vec<&str> = ids.drain(..20).collect();
-//             albums.append(&mut self.get_albums(&mut drained, market));
-//             albums.append(&mut self.get_albums(ids, market));
-//         }
-//         let market = market.map_or("from_token".to_string(), |v| v.alpha2().to_string());
-//         let params = [("ids", ids.join(",")), ("market", market)];
-//         let request = reqwest::Client::new()
-//             .get("https://api.spotify.com/v1/albums")
-//             .query(&params);
-//         let mut response = self.send(request).unwrap();
-//         let mut objects: Vec<Album> = get_values(&response.text().unwrap(), "albums").unwrap();
-//         albums.append(&mut objects);
-//
-//         albums
-//     }
