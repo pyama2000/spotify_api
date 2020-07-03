@@ -64,6 +64,21 @@ impl SearchClient {
         self
     }
 
+    pub fn set_limit(&mut self, limit: u32) -> &mut Self {
+        self.limit = Some(limit);
+        self
+    }
+
+    pub fn set_offset(&mut self, offset: u32) -> &mut Self {
+        self.offset = Some(offset);
+        self
+    }
+
+    pub fn set_market(&mut self, market: CountryCode) -> &mut Self {
+        self.market = Some(market);
+        self
+    }
+
     pub async fn search_album(&mut self) -> Result<PagingObject<SimpleAlbum>, Box<dyn Error>> {
         self.search(ObjectType::Album).await
     }
