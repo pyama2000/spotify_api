@@ -78,10 +78,10 @@ impl fmt::Display for Scope {
 #[derive(Clone, Debug, Default)]
 pub struct SpotifyOAuth {
     client_id: String,
-    redirect_uri: String,
-    state: String,
-    scopes: Vec<Scope>,
-    show_dialog: bool,
+    pub redirect_uri: String,
+    pub state: String,
+    pub scopes: Vec<Scope>,
+    pub show_dialog: bool,
 }
 
 impl SpotifyOAuth {
