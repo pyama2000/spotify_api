@@ -7,13 +7,13 @@ mod library {
     #[tokio::test]
     async fn is_saved() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = LibraryClient::new(&access_token, &refresh_token);
 
-        let albums_request = CheckSavedRequest{
+        let albums_request = CheckSavedRequest {
             ids: vec![
                 "0pJJgBzj26qnE1nSQUxaB0".to_string(),
                 "5ZAKzV4ZIa5Gt7z29OYHv0".to_string(),
@@ -24,10 +24,8 @@ mod library {
             .into_iter()
             .for_each(|result| assert!(!result));
 
-        let shows_request = CheckSavedRequest{
-            ids: vec![
-                "5AvwZVawapvyhJUIx71pdJ".to_string(),
-            ],
+        let shows_request = CheckSavedRequest {
+            ids: vec!["5AvwZVawapvyhJUIx71pdJ".to_string()],
         };
 
         let shows_results = client.is_saved_shows(shows_request).await.unwrap();
@@ -35,7 +33,7 @@ mod library {
             .into_iter()
             .for_each(|result| assert!(!result));
 
-        let tracks_request = CheckSavedRequest{
+        let tracks_request = CheckSavedRequest {
             ids: vec![
                 "0udZHhCi7p1YzMlvI4fXoK".to_string(),
                 "3SF5puV5eb6bgRSxBeMOk9".to_string(),
@@ -47,15 +45,15 @@ mod library {
             .into_iter()
             .for_each(|result| assert!(!result));
     }
-    
+
     #[tokio::test]
     #[ignore]
     async fn get_saved() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = LibraryClient::new(&access_token, &refresh_token);
 
         let albums_request = GetSavedRequest {
@@ -81,13 +79,13 @@ mod library {
     #[ignore]
     async fn save() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = LibraryClient::new(&access_token, &refresh_token);
 
-        let albums_request = SaveRequest{
+        let albums_request = SaveRequest {
             ids: vec![
                 "0pJJgBzj26qnE1nSQUxaB0".to_string(),
                 "5ZAKzV4ZIa5Gt7z29OYHv0".to_string(),
@@ -95,14 +93,12 @@ mod library {
         };
         let _ = client.save_albums(albums_request).await.unwrap();
 
-        let shows_request = SaveRequest{
-            ids: vec![
-                "5AvwZVawapvyhJUIx71pdJ".to_string(),
-            ],
+        let shows_request = SaveRequest {
+            ids: vec!["5AvwZVawapvyhJUIx71pdJ".to_string()],
         };
         let _ = client.save_shows(shows_request).await.unwrap();
 
-        let tracks_request = SaveRequest{
+        let tracks_request = SaveRequest {
             ids: vec![
                 "0udZHhCi7p1YzMlvI4fXoK".to_string(),
                 "3SF5puV5eb6bgRSxBeMOk9".to_string(),
@@ -115,13 +111,13 @@ mod library {
     #[ignore]
     async fn remove() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = LibraryClient::new(&access_token, &refresh_token);
 
-        let albums_request = RemoveSavedRequest{
+        let albums_request = RemoveSavedRequest {
             ids: vec![
                 "0pJJgBzj26qnE1nSQUxaB0".to_string(),
                 "5ZAKzV4ZIa5Gt7z29OYHv0".to_string(),
@@ -129,14 +125,12 @@ mod library {
         };
         let _ = client.remove_saved_albums(albums_request).await.unwrap();
 
-        let shows_request = RemoveSavedRequest{
-            ids: vec![
-                "5AvwZVawapvyhJUIx71pdJ".to_string(),
-            ],
+        let shows_request = RemoveSavedRequest {
+            ids: vec!["5AvwZVawapvyhJUIx71pdJ".to_string()],
         };
         let _ = client.remove_saved_shows(shows_request).await.unwrap();
 
-        let tracks_request = RemoveSavedRequest{
+        let tracks_request = RemoveSavedRequest {
             ids: vec![
                 "0udZHhCi7p1YzMlvI4fXoK".to_string(),
                 "3SF5puV5eb6bgRSxBeMOk9".to_string(),

@@ -116,13 +116,11 @@ impl FollowClient {
     ) -> BoxFuture<'_, Result<(), Box<dyn Error>>> {
         async move {
             if ids.len() > 50 {
-                self.follow(object_type, ids.drain(..50).collect())
-                    .await?;
+                self.follow(object_type, ids.drain(..50).collect()).await?;
                 self.follow(object_type, ids.clone()).await?;
 
                 return Ok(());
             }
-
 
             let builder = reqwest::Client::new()
                 .put("https://api.spotify.com/v1/me/following")

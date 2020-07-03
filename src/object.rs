@@ -160,7 +160,7 @@ pub struct Follower {
 //     access_token: String,
 //     refresh_token: String,
 // }
-// 
+//
 // impl<T: DeserializeOwned + Clone> PagingObjectWrapper<T> {
 //     pub fn new(paging_object: PagingObject<T>, access_token: &str, refresh_token: &str) -> Self {
 //         PagingObjectWrapper {
@@ -169,49 +169,49 @@ pub struct Follower {
 //             refresh_token: refresh_token.to_string(),
 //         }
 //     }
-// 
+//
 //     fn get_access_token(&self) -> String {
 //         self.access_token.to_string()
 //     }
-// 
+//
 //     fn get_refresh_token(&self) -> String {
 //         self.refresh_token.to_string()
 //     }
-// 
+//
 //     pub fn get_next(&self) -> Option<PagingObjectWrapper<T>> {
 //         let object = self
 //             .paging_object
 //             .get_next(&self.access_token, &self.refresh_token);
-// 
+//
 //         if let Some(o) = object {
 //             let wrapper =
 //                 PagingObjectWrapper::new(o, &self.get_access_token(), &self.get_refresh_token());
-// 
+//
 //             Some(wrapper)
 //         } else {
 //             None
 //         }
 //     }
-// 
+//
 //     pub fn get_previous(&self) -> Option<PagingObjectWrapper<T>> {
 //         let object = self
 //             .paging_object
 //             .get_previous(&self.access_token, &self.refresh_token);
-// 
+//
 //         if let Some(o) = object {
 //             let wrapper =
 //                 PagingObjectWrapper::new(o, &self.get_access_token(), &self.get_refresh_token());
-// 
+//
 //             Some(wrapper)
 //         } else {
 //             None
 //         }
 //     }
-// 
+//
 //     pub fn get_items(&self) -> Vec<T> {
 //         self.paging_object.get_items()
 //     }
-// 
+//
 //     pub fn get_all_items(&self) -> Vec<T> {
 //         self.paging_object
 //             .get_all_items(&self.get_access_token(), &self.get_refresh_token())

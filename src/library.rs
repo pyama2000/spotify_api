@@ -183,24 +183,15 @@ impl LibraryClient {
         .boxed()
     }
 
-    pub async fn save_albums(
-        &mut self,
-        request: SaveRequest,
-    ) -> Result<(), Box<dyn Error>> {
+    pub async fn save_albums(&mut self, request: SaveRequest) -> Result<(), Box<dyn Error>> {
         self.save(ObjectType::Albums, request.ids).await
     }
 
-    pub async fn save_shows(
-        &mut self,
-        request: SaveRequest,
-    ) -> Result<(), Box<dyn Error>> {
+    pub async fn save_shows(&mut self, request: SaveRequest) -> Result<(), Box<dyn Error>> {
         self.save(ObjectType::Shows, request.ids).await
     }
 
-    pub async fn save_tracks(
-        &mut self,
-        request: SaveRequest,
-    ) -> Result<(), Box<dyn Error>> {
+    pub async fn save_tracks(&mut self, request: SaveRequest) -> Result<(), Box<dyn Error>> {
         self.save(ObjectType::Tracks, request.ids).await
     }
 

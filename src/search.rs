@@ -64,15 +64,11 @@ impl SearchClient {
         self
     }
 
-    pub async fn search_album(
-        &mut self,
-    ) -> Result<PagingObject<SimpleAlbum>, Box<dyn Error>> {
+    pub async fn search_album(&mut self) -> Result<PagingObject<SimpleAlbum>, Box<dyn Error>> {
         self.search(ObjectType::Album).await
     }
 
-    pub async fn search_artist(
-        &mut self,
-    ) -> Result<PagingObject<Artist>, Box<dyn Error>> {
+    pub async fn search_artist(&mut self) -> Result<PagingObject<Artist>, Box<dyn Error>> {
         self.search(ObjectType::Artist).await
     }
 
@@ -82,9 +78,7 @@ impl SearchClient {
         self.search(ObjectType::Playlist).await
     }
 
-    pub async fn search_track (
-        &mut self,
-    ) -> Result<PagingObject<Track>, Box<dyn Error>> {
+    pub async fn search_track(&mut self) -> Result<PagingObject<Track>, Box<dyn Error>> {
         self.search(ObjectType::Track).await
     }
 

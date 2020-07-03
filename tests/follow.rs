@@ -7,13 +7,13 @@ mod follow {
     #[tokio::test]
     async fn is_following() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = FollowClient::new(&access_token, &refresh_token);
 
-        let request = CheckFollowRequest{
+        let request = CheckFollowRequest {
             ids: vec!["exampleuser01".to_string()],
         };
 
@@ -32,14 +32,14 @@ mod follow {
         assert!(!result.first().unwrap());
         assert!(!result.get(1).unwrap());
     }
-    
+
     #[tokio::test]
     async fn is_users_following_playlist() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = FollowClient::new(&access_token, &refresh_token);
         let request = CheckUserFollowPlaylistRequest {
             playlist_id: "2v3iNvBX8Ay1Gt2uXtUKUT".to_string(),
@@ -50,22 +50,22 @@ mod follow {
         assert!(!results.get(0).unwrap());
         assert!(!results.get(1).unwrap());
     }
-    
+
     #[tokio::test]
     async fn follow() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = FollowClient::new(&access_token, &refresh_token);
 
-        let request = FollowRequest{
+        let request = FollowRequest {
             ids: vec!["exampleuser01".to_string()],
         };
         let _ = client.follow_users(request).await.unwrap();
 
-        let request = FollowRequest{
+        let request = FollowRequest {
             ids: vec![
                 "74ASZWbe4lXaubB36ztrGX".to_string(),
                 "08td7MxkoHQkXnWAYD8d6Q".to_string(),
@@ -77,10 +77,10 @@ mod follow {
     #[tokio::test]
     async fn follow_playlist() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = FollowClient::new(&access_token, &refresh_token);
 
         let request = FollowPlaylistRequest {
@@ -93,10 +93,10 @@ mod follow {
     #[tokio::test]
     async fn get_followed_artists() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = FollowClient::new(&access_token, &refresh_token);
         let request = GetUserFollowedArtistRequest {
             limit: Some(2),
@@ -110,18 +110,18 @@ mod follow {
     #[tokio::test]
     async fn unfollow() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = FollowClient::new(&access_token, &refresh_token);
 
-        let request = UnfollowRequest{
+        let request = UnfollowRequest {
             ids: vec!["exampleuser01".to_string()],
         };
         let _ = client.unfollow_users(request).await.unwrap();
 
-        let request = UnfollowRequest{
+        let request = UnfollowRequest {
             ids: vec![
                 "74ASZWbe4lXaubB36ztrGX".to_string(),
                 "08td7MxkoHQkXnWAYD8d6Q".to_string(),
@@ -133,10 +133,10 @@ mod follow {
     #[tokio::test]
     async fn unfollow_playlist() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = FollowClient::new(&access_token, &refresh_token);
 
         let request = UnfollowPlaylistRequest {
@@ -144,4 +144,5 @@ mod follow {
             ..Default::default()
         };
         let _ = client.unfollow_playlist(request).await.unwrap();
-    }}
+    }
+}

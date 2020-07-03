@@ -8,7 +8,7 @@ use serde::Deserialize;
 use serde_json::json;
 
 use crate::{
-    object::{Image, Follower, PagingObject},
+    object::{Follower, Image, PagingObject},
     track::Track,
     user::User,
     RequestClient,
@@ -91,7 +91,7 @@ impl PlaylistClient {
                 results.append(&mut self.add_items(next_request).await?);
                 results.append(&mut self.add_items(request.clone()).await?);
 
-                return  Ok(results);
+                return Ok(results);
             }
 
             let mut json = serde_json::Map::new();
@@ -404,7 +404,6 @@ impl PlaylistClient {
         if let Some(length) = request.range_length {
             json.insert("range_length".to_string(), json!(length));
         }
-
 
         if let Some(snapshot_id) = request.snapshot_id {
             json.insert("snapshot_id".to_string(), json!(snapshot_id));

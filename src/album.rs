@@ -4,7 +4,12 @@ use futures::future::{BoxFuture, FutureExt};
 use isocountry::CountryCode;
 use serde::Deserialize;
 
-use crate::{artist::SimpleArtist, object::{Image, PagingObject}, track::SimpleTrack, RequestClient};
+use crate::{
+    artist::SimpleArtist,
+    object::{Image, PagingObject},
+    track::SimpleTrack,
+    RequestClient,
+};
 
 #[derive(Clone, Debug, Default, Deserialize)]
 pub struct Album {

@@ -56,7 +56,8 @@ impl PersonalizationClient {
             .unwrap();
 
         Ok(response.json().await?)
-    }}
+    }
+}
 
 #[derive(Clone, Debug, Default)]
 pub struct GetTopRequest {

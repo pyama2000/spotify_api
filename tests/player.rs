@@ -8,10 +8,10 @@ mod player {
     #[ignore]
     async fn add_item() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = PlayerClient::new(&access_token, &refresh_token);
 
         let request = AddItemRequest {
@@ -26,10 +26,10 @@ mod player {
     #[ignore]
     async fn get_devices() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = PlayerClient::new(&access_token, &refresh_token);
 
         let devices = client.get_devices().await.unwrap().devices;
@@ -40,10 +40,10 @@ mod player {
     #[ignore]
     async fn get_current_playback() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = PlayerClient::new(&access_token, &refresh_token);
         let request = GetCurrentlyRequest {
             ..Default::default()
@@ -59,17 +59,21 @@ mod player {
     #[ignore]
     async fn get_recently_tracks() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = PlayerClient::new(&access_token, &refresh_token);
         let request = GetRecentlyPlayedTracksRequest {
             limit: Some(2),
             ..Default::default()
         };
 
-        let histories = client.get_recently_played_tracks(request).await.unwrap().get_items();
+        let histories = client
+            .get_recently_played_tracks(request)
+            .await
+            .unwrap()
+            .get_items();
         for history in histories {
             dbg!(history.track.name);
         }
@@ -79,10 +83,10 @@ mod player {
     #[ignore]
     async fn get_currently_playing_track() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = PlayerClient::new(&access_token, &refresh_token);
         let request = GetCurrentlyRequest {
             ..Default::default()
@@ -98,10 +102,10 @@ mod player {
     #[ignore]
     async fn pause() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = PlayerClient::new(&access_token, &refresh_token);
         let request = PauseRequest {
             ..Default::default()
@@ -114,10 +118,10 @@ mod player {
     #[ignore]
     async fn resume() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = PlayerClient::new(&access_token, &refresh_token);
 
         client.start(None).await.unwrap();
@@ -127,10 +131,10 @@ mod player {
     #[ignore]
     async fn seek_to_position() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = PlayerClient::new(&access_token, &refresh_token);
 
         let request = SeekRequest {
@@ -145,10 +149,10 @@ mod player {
     #[ignore]
     async fn set_repeat_mode() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = PlayerClient::new(&access_token, &refresh_token);
 
         let request = SetRepeatModeRequest {
@@ -163,10 +167,10 @@ mod player {
     #[ignore]
     async fn set_volume() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = PlayerClient::new(&access_token, &refresh_token);
 
         let request = SetVolumeRequest {
@@ -181,10 +185,10 @@ mod player {
     #[ignore]
     async fn skip_next() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = PlayerClient::new(&access_token, &refresh_token);
 
         let request = SkipRequest {
@@ -198,10 +202,10 @@ mod player {
     #[ignore]
     async fn skip_previous() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = PlayerClient::new(&access_token, &refresh_token);
 
         let request = SkipRequest {
@@ -215,10 +219,10 @@ mod player {
     #[ignore]
     async fn start_context() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = PlayerClient::new(&access_token, &refresh_token);
 
         let request = StartRequest {
@@ -233,10 +237,10 @@ mod player {
     #[ignore]
     async fn start_tracks() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = PlayerClient::new(&access_token, &refresh_token);
 
         let request = StartRequest {
@@ -251,10 +255,10 @@ mod player {
     #[ignore]
     async fn toggle_shuffle() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = PlayerClient::new(&access_token, &refresh_token);
         let request = ToggleShuffleRequest {
             state: true,
@@ -268,10 +272,10 @@ mod player {
     #[ignore]
     async fn transfer_playlback() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = PlayerClient::new(&access_token, &refresh_token);
         let request = TransferPlaybackRequest {
             device_id: "".to_string(),

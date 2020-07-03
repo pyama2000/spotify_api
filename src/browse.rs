@@ -5,7 +5,10 @@ use isocountry::CountryCode;
 use serde::Deserialize;
 
 use crate::{
-    album::SimpleAlbum, object::{Image, PagingObject}, playlist::SimplePlaylist, track::SimpleTrack,
+    album::SimpleAlbum,
+    object::{Image, PagingObject},
+    playlist::SimplePlaylist,
+    track::SimpleTrack,
     RequestClient,
 };
 

@@ -8,10 +8,10 @@ mod playlist {
     // #[ignore]
     async fn add_items() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = PlaylistClient::new(&access_token, &refresh_token);
 
         let request = AddItemsRequest {
@@ -31,10 +31,10 @@ mod playlist {
     #[ignore]
     async fn change_detail() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = PlaylistClient::new(&access_token, &refresh_token);
         let request = ChangeDetailRequest {
             playlist_id: "3PJeEBUHSVRa1rJ6KOP30H".to_string(),
@@ -51,12 +51,12 @@ mod playlist {
     #[ignore]
     async fn create_playlist() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = PlaylistClient::new(&access_token, &refresh_token);
-        
+
         let request = CreatePlaylistRequest {
             user_id: "2v86jznkp2omgo6dor0y2y0yg".to_string(),
             name: "test".to_string(),
@@ -71,19 +71,19 @@ mod playlist {
     #[tokio::test]
     async fn get_playlists() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = PlaylistClient::new(&access_token, &refresh_token);
-    
+
         let request = GetPlaylistsRequest {
             limit: Some(2),
             ..Default::default()
         };
 
         let _ = client.get_playlists(request).await.unwrap().get_items();
- 
+
         let request = GetPlaylistsRequest {
             user_id: Some("wizzler".to_string()),
             limit: Some(2),
@@ -96,12 +96,12 @@ mod playlist {
     #[tokio::test]
     async fn get_playlist() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = PlaylistClient::new(&access_token, &refresh_token);
-        
+
         let request = GetPlaylistRequest {
             playlist_id: "3PJeEBUHSVRa1rJ6KOP30H".to_string(),
             ..Default::default()
@@ -113,10 +113,10 @@ mod playlist {
     #[tokio::test]
     async fn get_image() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = PlaylistClient::new(&access_token, &refresh_token);
 
         let request = GetImageRequest {
@@ -129,10 +129,10 @@ mod playlist {
     #[tokio::test]
     async fn get_items() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = PlaylistClient::new(&access_token, &refresh_token);
 
         let request = GetPlaylistTracksRequest {
@@ -148,10 +148,10 @@ mod playlist {
     #[ignore]
     async fn remove_items() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = PlaylistClient::new(&access_token, &refresh_token);
 
         let tracks = vec![
@@ -159,10 +159,7 @@ mod playlist {
             "spotify:episode:512ojhOuo1ktJprKbVcKyQ".to_string(),
         ];
 
-        let tracks = tracks
-            .into_iter()
-            .map(|uri| (uri, None))
-            .collect();
+        let tracks = tracks.into_iter().map(|uri| (uri, None)).collect();
 
         let request = RemoveItemsRequest {
             playlist_id: "3PJeEBUHSVRa1rJ6KOP30H".to_string(),
@@ -176,10 +173,10 @@ mod playlist {
     #[tokio::test]
     async fn reorder() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = PlaylistClient::new(&access_token, &refresh_token);
 
         let request = ReorderRequest {
@@ -195,12 +192,12 @@ mod playlist {
     #[tokio::test]
     async fn replace() {
         dotenv::dotenv().ok();
-    
+
         let access_token = std::env::var("ACCESS_TOKEN").unwrap();
         let refresh_token = std::env::var("REFRESH_TOKEN").unwrap();
-    
+
         let mut client = PlaylistClient::new(&access_token, &refresh_token);
-        
+
         let request = ReplaceRequest {
             playlist_id: "3PJeEBUHSVRa1rJ6KOP30H".to_string(),
             uris: vec![

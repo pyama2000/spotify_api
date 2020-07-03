@@ -2,7 +2,10 @@ use std::error::Error;
 
 use serde::Deserialize;
 
-use crate::{object::{Follower, Image}, RequestClient};
+use crate::{
+    object::{Follower, Image},
+    RequestClient,
+};
 
 #[derive(Clone, Debug, Default, Deserialize)]
 pub struct User {
@@ -32,7 +35,7 @@ impl UserClient {
         }
     }
 
-    pub async fn get_current_user(&mut self) -> Result<User, Box<dyn Error>>{
+    pub async fn get_current_user(&mut self) -> Result<User, Box<dyn Error>> {
         let builder = reqwest::Client::new().get("https://api.spotify.com/v1/me");
 
         let response = self.client.send(builder).await?.unwrap();

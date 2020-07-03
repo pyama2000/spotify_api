@@ -4,7 +4,12 @@ use futures::future::{BoxFuture, FutureExt};
 use isocountry::CountryCode;
 use serde::Deserialize;
 
-use crate::{album::SimpleAlbum, object::{Image, Follower, PagingObject}, track::Track, RequestClient};
+use crate::{
+    album::SimpleAlbum,
+    object::{Follower, Image, PagingObject},
+    track::Track,
+    RequestClient,
+};
 
 #[derive(Clone, Debug, Default, Deserialize)]
 pub struct Artist {
@@ -70,7 +75,7 @@ impl ArtistClient {
                     .artists
                     .append(&mut self.get_artists(request.clone()).await?.artists);
 
-                return  Ok(artist_response);
+                return Ok(artist_response);
             }
 
             let builder = reqwest::Client::new()

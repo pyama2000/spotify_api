@@ -125,7 +125,6 @@ impl TrackClient {
         market: Option<CountryCode>,
     ) -> BoxFuture<'_, Result<Vec<Track>, Box<dyn Error>>> {
         async move {
-
             let mut tracks = Vec::new();
             if track_ids.len() > 50 {
                 let drained = track_ids.drain(..50).collect();
