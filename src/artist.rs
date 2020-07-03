@@ -71,6 +71,8 @@ impl ArtistClient {
                 artist_response
                     .artists
                     .append(&mut self.get_artists(request.clone()).await?.artists);
+
+                return  Ok(artist_response);
             }
 
             let builder = reqwest::Client::new()

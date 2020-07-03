@@ -96,6 +96,8 @@ impl TrackClient {
                 let drained = track_ids.drain(..100).collect();
                 features.append(&mut self.get_audio_features(drained).await?);
                 features.append(&mut self.get_audio_features(track_ids.clone()).await?);
+
+                return Ok(features);
             }
 
             let builder = reqwest::Client::new()

@@ -72,7 +72,7 @@ impl PlaylistClient {
     pub fn add_items(
         &mut self,
         mut request: AddItemsRequest,
-    ) -> BoxFuture<'_, Result<Snapshot, Box<dyn Error>>> {
+    ) -> BoxFuture<'_, Result<Vec<Snapshot>, Box<dyn Error>>> {
         async move {
             let url = format!(
                 "https://api.spotify.com/v1/playlists/{}/tracks",
@@ -89,8 +89,10 @@ impl PlaylistClient {
                     position: request.position,
                 };
 
-                results.push(self.add_items(next_request).await?);
-                results.push(self.add_items(request.clone()).await?);
+                results.append(&mut self.add_items(next_request).await?);
+                results.append(&mut self.add_items(request.clone()).await?);
+
+                return  Ok(results);
             }
 
             let mut json = serde_json::Map::new();
@@ -109,8 +111,10 @@ impl PlaylistClient {
                 .json(&json);
 
             let response = self.client.send(builder).await?.unwrap();
+            let mut result = response.json().await?;
+            results.append(&mut result);
 
-            Ok(response.json().await?)
+            Ok(results)
         }
         .boxed()
     }
@@ -326,7 +330,7 @@ impl PlaylistClient {
     pub fn remove_items(
         &mut self,
         mut request: RemoveItemsRequest,
-    ) -> BoxFuture<'_, Result<Snapshot, Box<dyn Error>>> {
+    ) -> BoxFuture<'_, Result<Vec<Snapshot>, Box<dyn Error>>> {
         async move {
             let url = format!(
                 "https://api.spotify.com/v1/playlists/{}/tracks",
@@ -343,8 +347,10 @@ impl PlaylistClient {
                     snapshot_id: request.snapshot_id.clone(),
                 };
 
-                results.push(self.remove_items(next_request).await?);
-                results.push(self.remove_items(request.clone()).await?);
+                results.append(&mut self.remove_items(next_request).await?);
+                results.append(&mut self.remove_items(request.clone()).await?);
+
+                return Ok(results);
             }
 
             let mut json = serde_json::Map::new();
@@ -378,8 +384,10 @@ impl PlaylistClient {
                 .json(&json);
 
             let response = self.client.send(builder).await?.unwrap();
+            let mut result = response.json().await?;
+            results.append(&mut result);
 
-            Ok(response.json().await?)
+            Ok(results)
         }
         .boxed()
     }
