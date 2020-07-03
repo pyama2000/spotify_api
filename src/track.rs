@@ -167,7 +167,9 @@ pub struct TimeInterval {
 
 #[derive(Clone, Debug, Default, Deserialize)]
 pub struct Section {
-    #[serde(flatten)]
+    pub start: f64,
+    pub duration: f64,
+    pub confidence: f64,
     pub time_interval: TimeInterval,
     pub loudness: f64,
     pub tempo: f64,
