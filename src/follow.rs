@@ -36,13 +36,13 @@ impl FollowClient {
     fn is_following(
         &mut self,
         object_type: ObjectType,
-        ids: Vec<String>,
+        mut ids: Vec<String>,
     ) -> BoxFuture<'_, Result<Vec<bool>, Box<dyn Error>>> {
         async move {
             let mut results = Vec::new();
 
             if ids.len() > 50 {
-                let drained: Vec<String> = ids.clone().drain(..50).collect();
+                let drained: Vec<String> = ids.drain(..50).collect();
                 results.append(&mut self.is_following(object_type, drained).await?);
                 results.append(&mut self.is_following(object_type, ids.clone()).await?);
             }
@@ -64,7 +64,7 @@ impl FollowClient {
 
     pub fn is_users_following_playlist(
         &mut self,
-        request: CheckUserFollowPlaylistRequest,
+        mut request: CheckUserFollowPlaylistRequest,
     ) -> BoxFuture<'_, Result<Vec<bool>, Box<dyn Error>>> {
         async move {
             let url = format!(
@@ -74,7 +74,7 @@ impl FollowClient {
 
             let mut results = Vec::new();
             if request.user_ids.len() > 5 {
-                let user_ids: Vec<String> = request.user_ids.clone().drain(..5).collect();
+                let user_ids: Vec<String> = request.user_ids.drain(..5).collect();
 
                 let r = CheckUserFollowPlaylistRequest {
                     playlist_id: request.playlist_id.clone(),
@@ -110,11 +110,11 @@ impl FollowClient {
     fn follow(
         &mut self,
         object_type: ObjectType,
-        ids: Vec<String>,
+        mut ids: Vec<String>,
     ) -> BoxFuture<'_, Result<(), Box<dyn Error>>> {
         async move {
             if ids.len() > 50 {
-                self.follow(object_type, ids.clone().drain(..50).collect())
+                self.follow(object_type, ids.drain(..50).collect())
                     .await?;
                 self.follow(object_type, ids.clone()).await?;
             }
@@ -193,11 +193,11 @@ impl FollowClient {
     fn unfollow(
         &mut self,
         object_type: ObjectType,
-        ids: Vec<String>,
+        mut ids: Vec<String>,
     ) -> BoxFuture<'_, Result<(), Box<dyn Error>>> {
         async move {
             if ids.len() > 50 {
-                let drained: Vec<String> = ids.clone().drain(..50).collect();
+                let drained: Vec<String> = ids.drain(..50).collect();
                 self.unfollow(object_type.clone(), drained).await?;
                 self.unfollow(object_type, ids.clone()).await?;
             }

@@ -62,7 +62,7 @@ impl LibraryClient {
     fn is_saved(
         &mut self,
         object_type: ObjectType,
-        ids: Vec<String>,
+        mut ids: Vec<String>,
     ) -> BoxFuture<'_, Result<Vec<bool>, Box<dyn Error>>> {
         async move {
             let url = format!(
@@ -74,7 +74,7 @@ impl LibraryClient {
             if ids.len() > 50 {
                 results.append(
                     &mut self
-                        .is_saved(object_type, ids.clone().drain(..50).collect())
+                        .is_saved(object_type, ids.drain(..50).collect())
                         .await?,
                 );
 
@@ -158,13 +158,13 @@ impl LibraryClient {
     fn remove_saved(
         &mut self,
         object_type: ObjectType,
-        ids: Vec<String>,
+        mut ids: Vec<String>,
     ) -> BoxFuture<'_, Result<(), Box<dyn Error>>> {
         async move {
             let url = format!("https://api.spotify.com/v1/me/{}", object_type.to_string());
 
             if ids.len() > 50 {
-                self.remove_saved(object_type, ids.clone().drain(..50).collect())
+                self.remove_saved(object_type, ids.drain(..50).collect())
                     .await?;
                 self.remove_saved(object_type, ids.clone()).await?;
             }
@@ -204,13 +204,13 @@ impl LibraryClient {
     fn save(
         &mut self,
         object_type: ObjectType,
-        ids: Vec<String>,
+        mut ids: Vec<String>,
     ) -> BoxFuture<'_, Result<(), Box<dyn Error>>> {
         async move {
             let url = format!("https://api.spotify.com/v1/me/{}", object_type.to_string());
 
             if ids.len() > 50 {
-                self.remove_saved(object_type, ids.clone().drain(..50).collect())
+                self.remove_saved(object_type, ids.drain(..50).collect())
                     .await?;
                 self.remove_saved(object_type, ids.clone()).await?;
             }
