@@ -504,7 +504,7 @@ impl std::fmt::Display for ActionType {
 }
 
 impl ActionType {
-    pub fn to_method(&self) -> Method {
+    pub fn to_method(self) -> Method {
         match self {
             ActionType::SkipNext | ActionType::SkipPrevious => Method::POST,
             ActionType::Pause
