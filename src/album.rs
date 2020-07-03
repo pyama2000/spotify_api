@@ -89,6 +89,8 @@ impl AlbumClient {
                 albums_response
                     .albums
                     .append(&mut self.get_albums(request.clone()).await?.albums);
+
+                return Ok(albums_response);
             }
 
             let builder = reqwest::Client::new()

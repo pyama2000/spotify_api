@@ -79,6 +79,8 @@ impl LibraryClient {
                 );
 
                 results.append(&mut self.is_saved(object_type, ids.clone()).await?);
+
+                return Ok(results);
             }
 
             let builder = reqwest::Client::new()
@@ -167,6 +169,8 @@ impl LibraryClient {
                 self.remove_saved(object_type, ids.drain(..50).collect())
                     .await?;
                 self.remove_saved(object_type, ids.clone()).await?;
+
+                return Ok(());
             }
 
             let builder = reqwest::Client::new()
