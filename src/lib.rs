@@ -1,6 +1,10 @@
+use std::error::Error;
+
+use isocountry::CountryCode;
+use reqwest::{RequestBuilder, Response, StatusCode};
+
 pub mod album;
 pub mod artist;
-pub mod r#async;
 pub mod authentication;
 pub mod browse;
 pub mod follow;
@@ -12,66 +16,92 @@ pub mod playlist;
 pub mod search;
 pub mod track;
 pub mod user;
+use authentication::refresh_access_token;
 
-use crate::authentication::refresh_access_token;
-pub use chrono::{DateTime, Utc};
-use failure::Error;
-pub use isocountry::CountryCode;
-use reqwest::{RequestBuilder, Response, StatusCode};
-use serde::de::DeserializeOwned;
-use serde_json;
-
-fn get_value<T: DeserializeOwned>(json: &str, key: &str) -> Result<T, Error> {
-    //dbg!(&json);
-    let mut value: serde_json::Value = serde_json::from_str(json)?;
-    Ok(serde_json::from_value(value[key].take())?)
+#[derive(Clone, Debug, Default)]
+pub struct RequestClient {
+    client: reqwest::Client,
+    access_token: String,
+    refresh_token: String,
+    offset: Option<u32>,
+    limit: Option<u32>,
+    market: Option<CountryCode>,
+    country: Option<CountryCode>,
 }
 
-fn get_values<T: DeserializeOwned>(json: &str, key: &str) -> Result<Vec<T>, Error> {
-    let mut value: serde_json::Value = serde_json::from_str(json)?;
-    Ok(serde_json::from_value(value[key].take())?)
-}
+impl RequestClient {
+    pub fn new(access_token: &str, refresh_token: &str) -> Self {
+        RequestClient {
+            client: reqwest::Client::new(),
+            access_token: access_token.to_string(),
+            refresh_token: refresh_token.to_string(),
+            offset: None,
+            limit: None,
+            market: None,
+            country: None,
+        }
+    }
 
-fn generate_params(limit: Option<u32>, offset: Option<u32>) -> Vec<(&'static str, String)> {
-    let limit = limit.filter(|&x| x <= 50).unwrap_or(20);
-    let offset = offset.unwrap_or(0);
+    pub fn set_offset(&mut self, offset: Option<u32>) -> &mut Self {
+        self.offset = offset;
+        self
+    }
 
-    vec![("limit", limit.to_string()), ("offset", offset.to_string())]
-}
+    pub fn set_limit(&mut self, limit: Option<u32>) -> &mut Self {
+        self.limit = limit;
+        self
+    }
 
-trait Client {
-    fn get_access_token(&self) -> String;
-    fn get_refresh_token(&self) -> String;
-    fn set_access_token(&mut self, access_token: &str) -> &mut dyn Client;
+    pub fn set_market(&mut self, market: Option<CountryCode>) -> &mut Self {
+        self.market = market;
+        self
+    }
 
-    fn send(&mut self, request_builder: RequestBuilder) -> Option<Response> {
-        let response = request_builder
-            .try_clone()?
-            .bearer_auth(&self.get_access_token())
-            .send()
-            .unwrap();
-        match response.status() {
-            StatusCode::OK
-            | StatusCode::CREATED
-            | StatusCode::ACCEPTED
-            | StatusCode::NO_CONTENT => Some(response),
-            StatusCode::UNAUTHORIZED => {
-                let access_token = refresh_access_token(&self.get_refresh_token()).unwrap();
-                self.set_access_token(&access_token);
-                self.send(request_builder)
-            }
-            StatusCode::TOO_MANY_REQUESTS => {
-                dbg!(&response);
-                None
-            }
-            StatusCode::GATEWAY_TIMEOUT => {
-                println!("504 Gateway Timeout");
-                self.send(request_builder)
-            }
-            _ => {
-                dbg!(&request_builder);
-                dbg!(&response);
-                None
+    pub fn set_country(&mut self, country: Option<CountryCode>) -> &mut Self {
+        self.country = country;
+        self
+    }
+
+    pub async fn send(
+        &mut self,
+        mut builder: RequestBuilder,
+    ) -> Result<Option<Response>, Box<dyn Error>> {
+        if let Some(offset) = &self.offset {
+            builder = builder.query(&[("offset", offset)]);
+        }
+        if let Some(limit) = &self.limit {
+            builder = builder.query(&[("limit", limit)]);
+        }
+        if let Some(market) = &self.market {
+            builder = builder.query(&[("market", market.alpha2().to_string())]);
+        }
+        if let Some(country) = &self.country {
+            builder = builder.query(&[("country", country.alpha2().to_string())]);
+        }
+
+        loop {
+            let response = builder
+                .try_clone()
+                .unwrap()
+                .bearer_auth(&self.access_token)
+                .send()
+                .await?;
+
+            match response.status() {
+                StatusCode::ACCEPTED
+                | StatusCode::CREATED
+                | StatusCode::NO_CONTENT
+                | StatusCode::OK => {
+                    return Ok(Some(response));
+                }
+                StatusCode::UNAUTHORIZED => {
+                    self.access_token = refresh_access_token(&self.refresh_token).await?;
+                }
+                _ => {
+                    // dbg!(&response);
+                    // dbg!(&response.text().await?);
+                    return Ok(None);
+                }
             }
         }
     }

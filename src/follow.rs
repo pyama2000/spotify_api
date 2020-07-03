@@ -1,180 +1,301 @@
-use crate::object::{Artist, ObjectType, PagingObject, PagingObjectWrapper};
-use crate::{get_value, Client};
-use reqwest;
+use std::error::Error;
+
+use futures::future::{BoxFuture, FutureExt};
 use reqwest::header::CONTENT_TYPE;
+use serde::Deserialize;
 use serde_json::json;
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+use crate::{artist::Artist, object::CursorPagingObject, RequestClient};
+
+#[derive(Clone, Debug, Default)]
 pub struct FollowClient {
-    access_token: String,
-    refresh_token: String,
-}
-
-impl Client for FollowClient {
-    fn get_access_token(&self) -> String {
-        self.access_token.to_string()
-    }
-
-    fn get_refresh_token(&self) -> String {
-        self.refresh_token.to_string()
-    }
-
-    fn set_access_token(&mut self, access_token: &str) -> &mut Client {
-        self.access_token = access_token.to_string();
-        self
-    }
+    client: RequestClient,
 }
 
 impl FollowClient {
     pub fn new(access_token: &str, refresh_token: &str) -> Self {
         FollowClient {
-            access_token: access_token.to_string(),
-            refresh_token: refresh_token.to_string(),
+            client: RequestClient::new(access_token, refresh_token),
         }
     }
 
-    pub fn check_following_artists(&mut self, artist_ids: &mut Vec<&str>) -> Vec<bool> {
-        self.check_following(ObjectType::Artist, artist_ids)
-    }
-
-    pub fn check_following_users(&mut self, user_ids: &mut Vec<&str>) -> Vec<bool> {
-        self.check_following(ObjectType::User, user_ids)
-    }
-
-    pub fn check_following(&mut self, object_type: ObjectType, ids: &mut Vec<&str>) -> Vec<bool> {
-        let mut is_following_list = Vec::new();
-        if ids.len() > 50 {
-            let mut drained: Vec<&str> = ids.drain(..50).collect();
-            is_following_list.append(&mut self.check_following(object_type, &mut drained));
-            is_following_list.append(&mut self.check_following(object_type, ids));
-        }
-        let params = [("type", object_type.to_string()), ("ids", ids.join(","))];
-        let request = reqwest::Client::new()
-            .get("https://api.spotify.com/v1/me/following/contains")
-            .query(&params);
-        let mut response = self.send(request).unwrap();
-        let mut list: Vec<bool> = response.json().unwrap();
-        is_following_list.append(&mut list);
-
-        is_following_list
-    }
-
-    pub fn check_users_following_playlist(
+    pub async fn is_following_artist(
         &mut self,
-        playlist_id: &str,
-        user_ids: &mut Vec<&str>,
-    ) -> Vec<bool> {
-        let url = format!(
-            "https://api.spotify.com/v1/playlists/{}/followers/contains",
-            playlist_id
-        );
-        let mut list = Vec::new();
-        if user_ids.len() > 5 {
-            let mut drained: Vec<&str> = user_ids.drain(..5).collect();
-            list.append(&mut self.check_users_following_playlist(playlist_id, &mut drained));
-            list.append(&mut self.check_users_following_playlist(playlist_id, user_ids));
+        request: CheckFollowRequest,
+    ) -> Result<Vec<bool>, Box<dyn Error>> {
+        self.is_following(ObjectType::Artist, request.ids).await
+    }
+
+    pub async fn is_following_user(
+        &mut self,
+        request: CheckFollowRequest,
+    ) -> Result<Vec<bool>, Box<dyn Error>> {
+        self.is_following(ObjectType::User, request.ids).await
+    }
+
+    fn is_following(
+        &mut self,
+        object_type: ObjectType,
+        mut ids: Vec<String>,
+    ) -> BoxFuture<'_, Result<Vec<bool>, Box<dyn Error>>> {
+        async move {
+            let mut results = Vec::new();
+            if ids.len() > 50 {
+                let drained: Vec<String> = ids.drain(..50).collect();
+                results.append(&mut self.is_following(object_type, drained).await?);
+                results.append(&mut self.is_following(object_type, ids.clone()).await?);
+
+                return Ok(results);
+            }
+
+            let params = [("type", object_type.to_string()), ("ids", ids.join(","))];
+            let builder = reqwest::Client::new()
+                .get("https://api.spotify.com/v1/me/following/contains")
+                .query(&params);
+
+            let response = self.client.send(builder).await?.unwrap();
+
+            results.append(&mut response.json().await?);
+
+            Ok(results)
         }
-        let params = [("ids", user_ids.join(","))];
-        let request = reqwest::Client::new().get(&url).query(&params);
-        let mut response = self.send(request).unwrap();
-        let mut objects: Vec<bool> = response.json().unwrap();
-        list.append(&mut objects);
-
-        list
+        .boxed()
     }
 
-    pub fn follow_artists(&mut self, artist_ids: &mut Vec<&str>) {
-        self.follow(ObjectType::Artist, artist_ids);
-    }
+    pub fn is_users_following_playlist(
+        &mut self,
+        mut request: CheckUserFollowPlaylistRequest,
+    ) -> BoxFuture<'_, Result<Vec<bool>, Box<dyn Error>>> {
+        async move {
+            let url = format!(
+                "https://api.spotify.com/v1/playlists/{}/followers/contains",
+                request.playlist_id
+            );
 
-    pub fn follow_users(&mut self, user_ids: &mut Vec<&str>) {
-        self.follow(ObjectType::User, user_ids);
-    }
+            let mut results = Vec::new();
+            if request.user_ids.len() > 5 {
+                let user_ids: Vec<String> = request.user_ids.drain(..5).collect();
 
-    pub fn follow(&mut self, object_type: ObjectType, ids: &mut Vec<&str>) {
-        if ids.len() > 50 {
-            let mut drained: Vec<&str> = ids.drain(..50).collect();
-            self.follow(object_type, &mut drained);
-            self.follow(object_type, ids);
+                let r = CheckUserFollowPlaylistRequest {
+                    playlist_id: request.playlist_id.clone(),
+                    user_ids,
+                };
+
+                results.append(&mut self.is_users_following_playlist(r).await?);
+                results.append(&mut self.is_users_following_playlist(request.clone()).await?);
+
+                return Ok(results);
+            }
+
+            let builder = reqwest::Client::new()
+                .get(&url)
+                .query(&[("ids", request.user_ids.join(","))]);
+
+            let response = self.client.send(builder).await?.unwrap();
+
+            let mut values: Vec<bool> = response.json().await?;
+            results.append(&mut values);
+
+            Ok(results)
         }
-        let params = json!({
-            "ids": ids,
-        });
-        let request = reqwest::Client::new()
-            .put("https://api.spotify.com/v1/me/following")
-            .header(CONTENT_TYPE, "application/json")
-            .query(&[("type", object_type.to_string())])
-            .json(&params);
-        self.send(request).unwrap();
+        .boxed()
     }
 
-    pub fn follow_playlist(&mut self, playlist_id: &str, public: bool) {
+    pub async fn follow_artists(&mut self, request: FollowRequest) -> Result<(), Box<dyn Error>> {
+        self.follow(ObjectType::Artist, request.ids).await
+    }
+
+    pub async fn follow_users(&mut self, request: FollowRequest) -> Result<(), Box<dyn Error>> {
+        self.follow(ObjectType::User, request.ids).await
+    }
+
+    fn follow(
+        &mut self,
+        object_type: ObjectType,
+        mut ids: Vec<String>,
+    ) -> BoxFuture<'_, Result<(), Box<dyn Error>>> {
+        async move {
+            if ids.len() > 50 {
+                self.follow(object_type, ids.drain(..50).collect()).await?;
+                self.follow(object_type, ids.clone()).await?;
+
+                return Ok(());
+            }
+
+            let builder = reqwest::Client::new()
+                .put("https://api.spotify.com/v1/me/following")
+                .header(CONTENT_TYPE, "application/json")
+                .query(&[("type", object_type.to_string())])
+                .json(&json!({ "ids": ids }));
+
+            self.client.send(builder).await?.unwrap();
+
+            Ok(())
+        }
+        .boxed()
+    }
+
+    pub async fn follow_playlist(
+        &mut self,
+        request: FollowPlaylistRequest,
+    ) -> Result<(), Box<dyn Error>> {
         let url = format!(
             "https://api.spotify.com/v1/playlists/{}/followers",
-            playlist_id
+            request.id
         );
-        let params = json!({
-            "public": public,
-        });
-        let request = reqwest::Client::new()
+
+        let public = request.public.unwrap_or(true);
+        let builder = reqwest::Client::new()
             .put(&url)
             .header(CONTENT_TYPE, "application/json")
-            .json(&params);
-        self.send(request).unwrap();
+            .json(&[("public", public)]);
+
+        self.client.send(builder).await?.unwrap();
+
+        Ok(())
     }
 
-    pub fn get_followed_artists(
+    pub async fn get_followed_artists(
         &mut self,
-        limit: Option<u32>,
-        after: Option<String>,
-    ) -> PagingObjectWrapper<Artist> {
-        let mut params = vec![("type", "artist".to_string())];
-        let limit = limit.filter(|&x| x <= 50).unwrap_or(20);
-        params.push(("limit", limit.to_string()));
-        if let Some(after) = after {
-            params.push(("after", after));
+        request: GetUserFollowedArtistRequest,
+    ) -> Result<GetUserFollowedArtistResponse, Box<dyn Error>> {
+        let mut query = Vec::new();
+
+        query.push(("type", request.object_type.to_string()));
+
+        if let Some(after) = request.after {
+            query.push(("after", after));
         }
-        let request = reqwest::Client::new()
+
+        let builder = reqwest::Client::new()
             .get("https://api.spotify.com/v1/me/following")
-            .query(&params);
-        let mut response = self.send(request).unwrap();
-        let paging_object: PagingObject<Artist> =
-            get_value(&response.text().unwrap(), "artists").unwrap();
+            .query(&query);
 
-        PagingObjectWrapper::new(
-            paging_object,
-            &self.get_access_token(),
-            &self.get_refresh_token(),
-        )
+        let response = self
+            .client
+            .set_limit(request.limit)
+            .send(builder)
+            .await?
+            .unwrap();
+
+        Ok(response.json().await?)
     }
 
-    pub fn unfollow_artists(&mut self, artist_ids: &mut Vec<&str>) {
-        self.unfollow(ObjectType::Artist, artist_ids);
+    pub async fn unfollow_artists(
+        &mut self,
+        request: UnfollowRequest,
+    ) -> Result<(), Box<dyn Error>> {
+        self.unfollow(ObjectType::Artist, request.ids).await
     }
 
-    pub fn unfollow_users(&mut self, user_ids: &mut Vec<&str>) {
-        self.unfollow(ObjectType::User, user_ids);
+    pub async fn unfollow_users(&mut self, request: UnfollowRequest) -> Result<(), Box<dyn Error>> {
+        self.unfollow(ObjectType::User, request.ids).await
     }
 
-    pub fn unfollow(&mut self, object_type: ObjectType, ids: &mut Vec<&str>) {
-        if ids.len() > 50 {
-            let mut drained: Vec<&str> = ids.drain(..50).collect();
-            self.unfollow(object_type, &mut drained);
-            self.unfollow(object_type, ids);
+    fn unfollow(
+        &mut self,
+        object_type: ObjectType,
+        mut ids: Vec<String>,
+    ) -> BoxFuture<'_, Result<(), Box<dyn Error>>> {
+        async move {
+            if ids.len() > 50 {
+                let drained: Vec<String> = ids.drain(..50).collect();
+                self.unfollow(object_type.clone(), drained).await?;
+                self.unfollow(object_type, ids.clone()).await?;
+
+                return Ok(());
+            }
+
+            let builder = reqwest::Client::new()
+                .delete("https://api.spotify.com/v1/me/following")
+                .query(&[("type", object_type.to_string())])
+                .json(&json!({ "ids": ids }));
+
+            self.client.send(builder).await?.unwrap();
+
+            Ok(())
         }
-        let params = [("type", object_type.to_string()), ("ids", ids.join(","))];
-        let request = reqwest::Client::new()
-            .delete("https://api.spotify.com/v1/me/following")
-            .query(&params);
-        self.send(request).unwrap();
+        .boxed()
     }
 
-    pub fn unfollow_playlist(&mut self, playlist_id: &str) {
+    pub async fn unfollow_playlist(
+        &mut self,
+        request: UnfollowPlaylistRequest,
+    ) -> Result<(), Box<dyn Error>> {
         let url = format!(
             "https://api.spotify.com/v1/playlists/{}/followers",
-            playlist_id
+            request.id,
         );
-        let request = reqwest::Client::new().delete(&url);
-        self.send(request).unwrap();
+
+        let builder = reqwest::Client::new().delete(&url);
+
+        self.client.send(builder).await?.unwrap();
+
+        Ok(())
+    }
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct CheckFollowRequest {
+    pub ids: Vec<String>,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct CheckUserFollowPlaylistRequest {
+    pub playlist_id: String,
+    pub user_ids: Vec<String>,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct FollowRequest {
+    pub ids: Vec<String>,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct FollowPlaylistRequest {
+    pub id: String,
+    pub public: Option<bool>,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct GetUserFollowedArtistRequest {
+    pub object_type: ObjectType,
+    pub limit: Option<u32>,
+    pub after: Option<String>,
+}
+
+#[derive(Clone, Debug, Default, Deserialize)]
+pub struct GetUserFollowedArtistResponse {
+    pub artists: CursorPagingObject<Artist>,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct UnfollowRequest {
+    pub ids: Vec<String>,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct UnfollowPlaylistRequest {
+    pub id: String,
+}
+
+#[derive(Copy, Clone, Debug)]
+pub enum ObjectType {
+    Artist,
+    User,
+}
+
+impl std::fmt::Display for ObjectType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ObjectType::Artist => write!(f, "artist"),
+            ObjectType::User => write!(f, "user"),
+        }
+    }
+}
+
+impl Default for ObjectType {
+    fn default() -> Self {
+        ObjectType::Artist
     }
 }

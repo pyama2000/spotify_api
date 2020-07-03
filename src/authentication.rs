@@ -1,19 +1,20 @@
+use std::env;
+use std::fmt;
+
 use dotenv::dotenv;
 use failure::Error;
 use rand::{self, distributions::Alphanumeric, Rng};
 use reqwest;
-use serde_derive::Deserialize;
-use std::env;
-use std::fmt;
+use serde::Deserialize;
 
-#[derive(Default)]
-struct ClientCredential {
+#[derive(Clone, Debug, Default)]
+struct Credential {
     client_id: String,
     client_secret: String,
     redirect_uri: String,
 }
 
-impl ClientCredential {
+impl Credential {
     fn new() -> Self {
         dotenv().ok();
 
@@ -21,7 +22,7 @@ impl ClientCredential {
         let client_secret = env::var("CLIENT_SECRET").expect("CLIENT_SECRET must be set");
         let redirect_uri = env::var("REDIRECT_URI").expect("REDIRECT_URI must be set");
 
-        ClientCredential {
+        Credential {
             client_id,
             client_secret,
             redirect_uri,
@@ -29,10 +30,9 @@ impl ClientCredential {
     }
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+#[derive(Clone, Debug)]
 pub enum Scope {
     UserReadPrivate,
-    UserReadBirthdate,
     UserReadEmail,
     Streaming,
     AppRemoteControl,
@@ -55,7 +55,6 @@ impl fmt::Display for Scope {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Scope::UserReadPrivate => write!(f, "user-read-private"),
-            Scope::UserReadBirthdate => write!(f, "user-read-birthdate"),
             Scope::UserReadEmail => write!(f, "user-read-email"),
             Scope::Streaming => write!(f, "streaming"),
             Scope::AppRemoteControl => write!(f, "app-remote-control"),
@@ -76,7 +75,7 @@ impl fmt::Display for Scope {
     }
 }
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct SpotifyOAuth {
     client_id: String,
     redirect_uri: String,
@@ -87,37 +86,23 @@ pub struct SpotifyOAuth {
 
 impl SpotifyOAuth {
     pub fn new() -> Self {
-        let credential_info = ClientCredential::new();
+        let credential = Credential::new();
 
         SpotifyOAuth {
-            client_id: credential_info.client_id,
-            redirect_uri: credential_info.redirect_uri,
+            client_id: credential.client_id,
+            redirect_uri: credential.redirect_uri,
             state: generate_random_string(12),
             scopes: Vec::new(),
             show_dialog: false,
         }
     }
 
-    pub fn get_redirect_uri(&self) -> &str {
-        &self.redirect_uri
-    }
-
-    pub fn get_state(&self) -> &str {
-        &self.state
-    }
-
-    pub fn get_scopes(&self) -> &[Scope] {
-        &self.scopes
-    }
-
-    pub fn set_scopes(&mut self, scopes: &[Scope]) -> &mut Self {
+    pub fn set_scopes(&mut self, scopes: &[Scope]) {
         self.scopes = scopes.to_vec();
-        self
     }
 
-    pub fn generate_random_state(&mut self, length: usize) -> &mut Self {
+    pub fn generate_random_state(&mut self, length: usize) {
         self.state = generate_random_string(length);
-        self
     }
 
     pub fn generate_auth_url(&self) -> Result<String, Error> {
@@ -127,6 +112,7 @@ impl SpotifyOAuth {
             .map(std::string::ToString::to_string)
             .collect::<Vec<String>>()
             .join(" ");
+
         let query = [
             ("client_id", &self.client_id),
             ("response_type", &"code".to_string()),
@@ -143,13 +129,63 @@ impl SpotifyOAuth {
     }
 }
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize)]
-pub struct Token {
+#[derive(Clone, Debug, Default, Deserialize)]
+pub struct RequestTokenResponse {
     pub access_token: String,
-    pub token_type: String,
-    pub scope: String,
-    pub expires_in: isize,
-    pub refresh_token: Option<String>,
+    pub refresh_token: String,
+}
+
+pub async fn request_tokens(code: &str) -> Result<RequestTokenResponse, Error> {
+    let Credential {
+        client_id,
+        client_secret,
+        redirect_uri,
+    } = Credential::new();
+
+    let query = [
+        ("grant_type", "authorization_code"),
+        ("code", code),
+        ("redirect_uri", &redirect_uri),
+    ];
+
+    let response = reqwest::Client::new()
+        .post("https://accounts.spotify.com/api/token")
+        .basic_auth(client_id, Some(client_secret))
+        .form(&query)
+        .send()
+        .await
+        .expect("send error");
+
+    Ok(response.json().await.expect("parse error"))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct RefreshTokenResponse {
+    pub access_token: String,
+}
+
+pub async fn refresh_access_token(refresh_token: &str) -> Result<String, Error> {
+    let Credential {
+        client_id,
+        client_secret,
+        ..
+    } = Credential::new();
+
+    let query = [
+        ("grant_type", "refresh_token"),
+        ("refresh_token", refresh_token),
+    ];
+
+    let response: RefreshTokenResponse = reqwest::Client::new()
+        .post("https://accounts.spotify.com/api/token")
+        .basic_auth(client_id, Some(client_secret))
+        .form(&query)
+        .send()
+        .await?
+        .json()
+        .await?;
+
+    Ok(response.access_token)
 }
 
 fn generate_random_string(length: usize) -> String {
@@ -157,42 +193,4 @@ fn generate_random_string(length: usize) -> String {
         .sample_iter(&Alphanumeric)
         .take(length)
         .collect()
-}
-
-pub fn refresh_access_token(refresh_token: &str) -> Result<String, Error> {
-    let credential_info = ClientCredential::new();
-    let query = [
-        ("grant_type", "refresh_token"),
-        ("refresh_token", refresh_token),
-    ];
-    let mut response = reqwest::Client::new()
-        .post("https://accounts.spotify.com/api/token")
-        .basic_auth(
-            credential_info.client_id,
-            Some(credential_info.client_secret),
-        )
-        .form(&query)
-        .send()?;
-    let token: Token = response.json()?;
-
-    Ok(token.access_token)
-}
-
-pub fn request_tokens(code: &str) -> Result<Token, Error> {
-    let credential_info = ClientCredential::new();
-    let query = [
-        ("grant_type", "authorization_code"),
-        ("code", code),
-        ("redirect_uri", &credential_info.redirect_uri),
-    ];
-    let mut response = reqwest::Client::new()
-        .post("https://accounts.spotify.com/api/token")
-        .basic_auth(
-            credential_info.client_id,
-            Some(credential_info.client_secret),
-        )
-        .form(&query)
-        .send()?;
-
-    Ok(response.json()?)
 }
