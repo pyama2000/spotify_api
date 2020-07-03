@@ -17,7 +17,6 @@ pub struct SavedAlbum {
 #[derive(Clone, Debug, Default, Deserialize)]
 pub struct SavedShow {
     added_at: Option<DateTime<Utc>>,
-    // show: Show,
 }
 
 #[derive(Clone, Debug, Default, Deserialize)]

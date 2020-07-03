@@ -2,7 +2,7 @@ use std::error::Error;
 
 use serde::Deserialize;
 
-use crate::{object::Image, RequestClient};
+use crate::{object::{Follower, Image}, RequestClient};
 
 #[derive(Clone, Debug, Default, Deserialize)]
 pub struct User {
@@ -10,8 +10,7 @@ pub struct User {
     pub country: Option<String>,
     pub email: Option<String>,
     pub display_name: Option<String>,
-    // pub external_urls: ExternalURL,
-    // pub followers: Option<Follower>,
+    pub followers: Option<Follower>,
     pub href: String,
     pub id: String,
     pub images: Option<Vec<Image>>,

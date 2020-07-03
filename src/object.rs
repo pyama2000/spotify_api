@@ -148,6 +148,12 @@ pub struct Image {
     pub width: Option<u32>,
 }
 
+#[derive(Clone, Debug, Default, Deserialize)]
+pub struct Follower {
+    pub href: Option<String>,
+    pub total: u32,
+}
+
 // #[derive(Deserialize, Serialize, Clone, Debug, Default)]
 // pub struct PagingObjectWrapper<T> {
 //     pub paging_object: PagingObject<T>,
@@ -393,11 +399,6 @@ pub struct Image {
 // #[derive(Deserialize, Serialize, Clone, Debug, Default)]
 // pub struct ExternalURL {}
 //
-// #[derive(Deserialize, Serialize, Clone, Debug, Default)]
-// pub struct Follower {
-//     pub href: Option<String>,
-//     pub total: u32,
-// }
 //
 // #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 // pub enum ObjectType {

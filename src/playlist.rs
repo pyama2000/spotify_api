@@ -8,25 +8,25 @@ use serde::Deserialize;
 use serde_json::json;
 
 use crate::{
-    object::{Image, PagingObject},
+    object::{Image, Follower, PagingObject},
     track::Track,
+    user::User,
     RequestClient,
 };
 
-#[derive(Clone, Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct Playlist {
     pub collaborative: bool,
     pub description: Option<String>,
-    // pub external_urls: ExternalURL,
-    // pub followers: Follower,
+    pub followers: Follower,
     pub href: String,
     pub id: String,
     pub images: Vec<Image>,
     pub name: String,
-    // pub owner: User,
+    pub owner: User,
     pub public: Option<bool>,
     pub snapshot_id: String,
-    // pub tracks: PagingObject<PlaylistTrack>,
+    pub tracks: PagingObject<PlaylistTrack>,
     #[serde(rename = "type")]
     pub object_type: String,
     pub uri: String,
@@ -36,12 +36,11 @@ pub struct Playlist {
 pub struct SimplePlaylist {
     pub collaborative: bool,
     pub description: Option<String>,
-    // pub external_urls: ExternalURL,
     pub href: String,
     pub id: String,
-    // pub images: Vec<Image>,
+    pub images: Vec<Image>,
     pub name: String,
-    // pub owner: User,
+    pub owner: User,
     pub public: Option<bool>,
     pub snapshot_id: String,
     #[serde(rename = "type")]
@@ -52,7 +51,7 @@ pub struct SimplePlaylist {
 #[derive(Clone, Debug, Deserialize)]
 pub struct PlaylistTrack {
     pub added_at: DateTime<Utc>,
-    // pub added_by: User,
+    pub added_by: User,
     pub is_local: bool,
     pub track: Track,
 }

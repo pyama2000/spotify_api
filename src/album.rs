@@ -4,26 +4,23 @@ use futures::future::{BoxFuture, FutureExt};
 use isocountry::CountryCode;
 use serde::Deserialize;
 
-use crate::{artist::SimpleArtist, object::PagingObject, track::SimpleTrack, RequestClient};
+use crate::{artist::SimpleArtist, object::{Image, PagingObject}, track::SimpleTrack, RequestClient};
 
 #[derive(Clone, Debug, Default, Deserialize)]
 pub struct Album {
     pub album_type: String,
-    // pub artists: Vec<Artist>,
-    pub available_markets: Option<Vec<String>>,
-    // pub copyrights: Option<Vec<Copyrights>>,
-    // pub external_ids: Option<ExternalID>,
-    // pub external_urls: ExternalURL,
+    pub artists: Vec<SimpleArtist>,
+    pub available_markets: Vec<String>,
     pub genres: Vec<String>,
     pub href: String,
     pub id: String,
-    // pub images: Vec<Image>,
+    pub images: Vec<Image>,
     pub label: String,
     pub name: String,
     pub popularity: u32,
     pub release_date: String,
     pub release_date_precision: String,
-    // pub tracks: PagingObject<Track>,
+    pub tracks: PagingObject<SimpleTrack>,
     #[serde(rename = "type")]
     pub object_type: String,
     pub uri: String,
@@ -35,10 +32,9 @@ pub struct SimpleAlbum {
     pub album_type: String,
     pub artists: Vec<SimpleArtist>,
     pub available_markets: Option<Vec<String>>,
-    // pub external_urls: ExternalURL,
     pub href: String,
     pub id: String,
-    // pub images: Vec<Image>,
+    pub images: Vec<Image>,
     pub name: String,
     #[serde(rename = "type")]
     pub object_type: String,

@@ -5,14 +5,14 @@ use isocountry::CountryCode;
 use serde::Deserialize;
 
 use crate::{
-    album::SimpleAlbum, object::PagingObject, playlist::SimplePlaylist, track::SimpleTrack,
+    album::SimpleAlbum, object::{Image, PagingObject}, playlist::SimplePlaylist, track::SimpleTrack,
     RequestClient,
 };
 
 #[derive(Clone, Debug, Default, Deserialize)]
 pub struct Category {
     pub href: String,
-    // pub icons: Vec<Image>,
+    pub icons: Vec<Image>,
     pub id: String,
     pub name: String,
 }
