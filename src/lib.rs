@@ -6,8 +6,16 @@ use reqwest::{RequestBuilder, Response, StatusCode};
 pub mod album;
 pub mod artist;
 pub mod authentication;
+pub mod browse;
+pub mod follow;
+pub mod library;
 pub mod object;
+pub mod personalization;
+pub mod player;
+pub mod playlist;
+pub mod search;
 pub mod track;
+pub mod user;
 use authentication::refresh_access_token;
 
 #[derive(Clone, Debug, Default)]
@@ -18,6 +26,7 @@ pub struct RequestClient {
     offset: Option<u32>,
     limit: Option<u32>,
     market: Option<CountryCode>,
+    country: Option<CountryCode>,
 }
 
 impl RequestClient {
@@ -29,6 +38,7 @@ impl RequestClient {
             offset: None,
             limit: None,
             market: None,
+            country: None,
         }
     }
 
@@ -47,6 +57,11 @@ impl RequestClient {
         self
     }
 
+    pub fn set_country(&mut self, country: Option<CountryCode>) -> &mut Self {
+        self.country = country;
+        self
+    }
+
     pub async fn send(
         &mut self,
         mut builder: RequestBuilder,
@@ -59,6 +74,9 @@ impl RequestClient {
         }
         if let Some(market) = &self.market {
             builder = builder.query(&[("market", market.alpha2().to_string())]);
+        }
+        if let Some(country) = &self.country {
+            builder = builder.query(&[("country", country.alpha2().to_string())]);
         }
 
         loop {
@@ -80,6 +98,8 @@ impl RequestClient {
                     self.access_token = refresh_access_token(&self.refresh_token).await?;
                 }
                 _ => {
+                    // dbg!(&response);
+                    // dbg!(&response.text().await?);
                     return Ok(None);
                 }
             }

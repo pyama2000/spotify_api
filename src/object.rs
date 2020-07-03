@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize};
 
 use crate::RequestClient;
 
@@ -8,7 +8,7 @@ async fn get_paging_object<T: DeserializeOwned>(
     url: &str,
     access_token: &str,
     refresh_token: &str,
-) -> Result<PagingObject<T>, Box<dyn Error>> {
+) -> Result<T, Box<dyn Error>> {
     let mut client = RequestClient::new(access_token, refresh_token);
     let request = reqwest::Client::new().get(url);
     let response = client.send(request).await?.unwrap();
@@ -16,7 +16,7 @@ async fn get_paging_object<T: DeserializeOwned>(
     Ok(response.json().await?)
 }
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize)]
 pub struct PagingObject<T> {
     pub href: String,
     pub items: Vec<T>,
@@ -24,7 +24,6 @@ pub struct PagingObject<T> {
     pub next: Option<String>,
     pub offset: Option<u32>,
     pub previous: Option<String>,
-    // pub cursors: Option<Cursor>,
     pub total: Option<u32>,
 }
 
@@ -91,13 +90,77 @@ impl<T: DeserializeOwned + Clone> PagingObject<T> {
     }
 }
 
+#[derive(Clone, Debug, Default, Deserialize)]
+pub struct Cursor {
+    after: String,
+}
+
+#[derive(Clone, Debug, Default, Deserialize)]
+pub struct CursorPagingObject<T> {
+    pub href: String,
+    pub items: Vec<T>,
+    pub limit: u32,
+    pub next: Option<String>,
+    pub cursors: Cursor,
+    pub total: Option<u32>,
+}
+
+impl<T: DeserializeOwned + Clone> CursorPagingObject<T> {
+    pub async fn get_next(
+        &self,
+        access_token: &str,
+        refresh_token: &str,
+    ) -> Result<Option<CursorPagingObject<T>>, Box<dyn Error>> {
+        let object = if let Some(url) = &self.next {
+            Some(get_paging_object(url, access_token, refresh_token).await?)
+        } else {
+            None
+        };
+
+        Ok(object)
+    }
+
+    pub fn get_items(&self) -> Vec<T> {
+        self.items.clone()
+    }
+
+    pub async fn get_all_items(
+        &self,
+        access_token: &str,
+        refresh_token: &str,
+    ) -> Result<Vec<T>, Box<dyn Error>> {
+        let mut items = self.get_items();
+
+        let mut next = self.get_next(access_token, refresh_token).await?;
+        while let Some(n) = next {
+            items.append(&mut n.get_items());
+            next = n.get_next(access_token, refresh_token).await?;
+        }
+
+        Ok(items)
+    }
+}
+
+#[derive(Clone, Debug, Default, Deserialize)]
+pub struct Image {
+    pub height: Option<u32>,
+    pub url: String,
+    pub width: Option<u32>,
+}
+
+#[derive(Clone, Debug, Default, Deserialize)]
+pub struct Follower {
+    pub href: Option<String>,
+    pub total: u32,
+}
+
 // #[derive(Deserialize, Serialize, Clone, Debug, Default)]
 // pub struct PagingObjectWrapper<T> {
 //     pub paging_object: PagingObject<T>,
 //     access_token: String,
 //     refresh_token: String,
 // }
-// 
+//
 // impl<T: DeserializeOwned + Clone> PagingObjectWrapper<T> {
 //     pub fn new(paging_object: PagingObject<T>, access_token: &str, refresh_token: &str) -> Self {
 //         PagingObjectWrapper {
@@ -106,49 +169,49 @@ impl<T: DeserializeOwned + Clone> PagingObject<T> {
 //             refresh_token: refresh_token.to_string(),
 //         }
 //     }
-// 
+//
 //     fn get_access_token(&self) -> String {
 //         self.access_token.to_string()
 //     }
-// 
+//
 //     fn get_refresh_token(&self) -> String {
 //         self.refresh_token.to_string()
 //     }
-// 
+//
 //     pub fn get_next(&self) -> Option<PagingObjectWrapper<T>> {
 //         let object = self
 //             .paging_object
 //             .get_next(&self.access_token, &self.refresh_token);
-// 
+//
 //         if let Some(o) = object {
 //             let wrapper =
 //                 PagingObjectWrapper::new(o, &self.get_access_token(), &self.get_refresh_token());
-// 
+//
 //             Some(wrapper)
 //         } else {
 //             None
 //         }
 //     }
-// 
+//
 //     pub fn get_previous(&self) -> Option<PagingObjectWrapper<T>> {
 //         let object = self
 //             .paging_object
 //             .get_previous(&self.access_token, &self.refresh_token);
-// 
+//
 //         if let Some(o) = object {
 //             let wrapper =
 //                 PagingObjectWrapper::new(o, &self.get_access_token(), &self.get_refresh_token());
-// 
+//
 //             Some(wrapper)
 //         } else {
 //             None
 //         }
 //     }
-// 
+//
 //     pub fn get_items(&self) -> Vec<T> {
 //         self.paging_object.get_items()
 //     }
-// 
+//
 //     pub fn get_all_items(&self) -> Vec<T> {
 //         self.paging_object
 //             .get_all_items(&self.get_access_token(), &self.get_refresh_token())
@@ -336,18 +399,6 @@ impl<T: DeserializeOwned + Clone> PagingObject<T> {
 // #[derive(Deserialize, Serialize, Clone, Debug, Default)]
 // pub struct ExternalURL {}
 //
-// #[derive(Deserialize, Serialize, Clone, Debug, Default)]
-// pub struct Follower {
-//     pub href: Option<String>,
-//     pub total: u32,
-// }
-//
-// #[derive(Deserialize, Serialize, Clone, Debug, Default)]
-// pub struct Image {
-//     pub height: Option<u32>,
-//     pub url: String,
-//     pub width: Option<u32>,
-// }
 //
 // #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 // pub enum ObjectType {

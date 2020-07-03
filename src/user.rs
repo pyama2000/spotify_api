@@ -1,46 +1,54 @@
-use crate::object::User;
-use crate::Client;
-use reqwest;
+use std::error::Error;
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
-pub struct UserClient {
-    access_token: String,
-    refresh_token: String,
+use serde::Deserialize;
+
+use crate::{
+    object::{Follower, Image},
+    RequestClient,
+};
+
+#[derive(Clone, Debug, Default, Deserialize)]
+pub struct User {
+    pub birthdate: Option<String>,
+    pub country: Option<String>,
+    pub email: Option<String>,
+    pub display_name: Option<String>,
+    pub followers: Option<Follower>,
+    pub href: String,
+    pub id: String,
+    pub images: Option<Vec<Image>>,
+    pub product: Option<String>,
+    #[serde(rename = "type")]
+    pub object_type: String,
+    pub uri: String,
 }
 
-impl Client for UserClient {
-    fn get_access_token(&self) -> String {
-        self.access_token.to_string()
-    }
-
-    fn get_refresh_token(&self) -> String {
-        self.refresh_token.to_string()
-    }
-
-    fn set_access_token(&mut self, access_token: &str) -> &mut Client {
-        self.access_token = access_token.to_string();
-        self
-    }
+#[derive(Clone, Debug, Default)]
+pub struct UserClient {
+    client: RequestClient,
 }
 
 impl UserClient {
     pub fn new(access_token: &str, refresh_token: &str) -> Self {
         UserClient {
-            access_token: access_token.to_string(),
-            refresh_token: refresh_token.to_string(),
+            client: RequestClient::new(access_token, refresh_token),
         }
     }
 
-    pub fn get_current_user(&mut self) -> User {
-        let request = reqwest::Client::new().get("https://api.spotify.com/v1/me");
-        let mut response = self.send(request).unwrap();
-        response.json().unwrap()
+    pub async fn get_current_user(&mut self) -> Result<User, Box<dyn Error>> {
+        let builder = reqwest::Client::new().get("https://api.spotify.com/v1/me");
+
+        let response = self.client.send(builder).await?.unwrap();
+
+        Ok(response.json().await?)
     }
 
-    pub fn get_user(&mut self, id: &str) -> User {
+    pub async fn get_user(&mut self, id: &str) -> Result<User, Box<dyn Error>> {
         let url = format!("https://api.spotify.com/v1/users/{}", id);
-        let request = reqwest::Client::new().get(&url);
-        let mut response = self.send(request).unwrap();
-        response.json().unwrap()
+        let builder = reqwest::Client::new().get(&url);
+
+        let response = self.client.send(builder).await?.unwrap();
+
+        Ok(response.json().await?)
     }
 }

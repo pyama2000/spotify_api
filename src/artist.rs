@@ -4,16 +4,20 @@ use futures::future::{BoxFuture, FutureExt};
 use isocountry::CountryCode;
 use serde::Deserialize;
 
-use crate::{album::SimpleAlbum, object::PagingObject, track::Track, RequestClient};
+use crate::{
+    album::SimpleAlbum,
+    object::{Follower, Image, PagingObject},
+    track::Track,
+    RequestClient,
+};
 
 #[derive(Clone, Debug, Default, Deserialize)]
 pub struct Artist {
-    // pub external_urls: ExternalURL,
-    // pub followers: Option<Follower>,
-    pub genres: Option<Vec<String>>,
+    pub followers: Follower,
+    pub genres: Vec<String>,
     pub href: String,
     pub id: String,
-    // pub images: Option<Vec<Image>>,
+    pub images: Vec<Image>,
     pub name: String,
     pub popularity: Option<u32>,
     #[serde(rename = "type")]
@@ -23,7 +27,6 @@ pub struct Artist {
 
 #[derive(Clone, Debug, Default, Deserialize)]
 pub struct SimpleArtist {
-    // pub external_urls: ExternalURL,
     pub href: String,
     pub id: String,
     pub name: String,
@@ -71,6 +74,8 @@ impl ArtistClient {
                 artist_response
                     .artists
                     .append(&mut self.get_artists(request.clone()).await?.artists);
+
+                return Ok(artist_response);
             }
 
             let builder = reqwest::Client::new()
@@ -92,21 +97,18 @@ impl ArtistClient {
         request: GetArtistAlbumRequest,
     ) -> Result<PagingObject<SimpleAlbum>, Box<dyn Error>> {
         let url = format!("https://api.spotify.com/v1/artists/{}/albums", request.id);
-        let mut query = Vec::new();
 
-        let country = request
-            .country
-            .map_or("from_token".to_string(), |v| v.alpha2().to_string());
-        query.push(("country", country));
-
-        if let Some(groups) = request.include_groups {
+        let query = if let Some(groups) = request.include_groups {
             let s = groups
                 .into_iter()
                 .map(|s| s.to_string())
                 .collect::<Vec<String>>()
                 .join(",");
-            query.push(("include_groups", s));
-        }
+
+            vec![("include_groups", s)]
+        } else {
+            Vec::new()
+        };
 
         let builder = reqwest::Client::new().get(&url).query(&query);
 
@@ -114,6 +116,7 @@ impl ArtistClient {
             .client
             .set_offset(request.offset)
             .set_limit(request.limit)
+            .set_country(request.country)
             .send(builder)
             .await?
             .unwrap();

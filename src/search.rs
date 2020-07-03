@@ -1,10 +1,116 @@
-use crate::object::{PagingObject, PagingObjectWrapper};
-use crate::{generate_params, get_value, Client, CountryCode};
-use serde::de::DeserializeOwned;
-use std::convert::From;
-use std::fmt;
+use std::error::Error;
 
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+use isocountry::CountryCode;
+use serde::de::DeserializeOwned;
+
+use crate::{
+    album::SimpleAlbum, artist::Artist, object::PagingObject, playlist::SimplePlaylist,
+    track::Track, RequestClient,
+};
+
+#[derive(Clone, Debug, Default)]
+pub struct SearchClient {
+    client: RequestClient,
+    query: Vec<String>,
+    limit: Option<u32>,
+    offset: Option<u32>,
+    market: Option<CountryCode>,
+}
+
+impl SearchClient {
+    pub fn new(access_token: &str, refresh_token: &str) -> Self {
+        SearchClient {
+            client: RequestClient::new(access_token, refresh_token),
+            query: Vec::new(),
+            ..Default::default()
+        }
+    }
+
+    pub fn set_keyword(&mut self, keyword: &str) -> &mut Self {
+        self.query.push(keyword.to_string());
+        self
+    }
+
+    pub fn set_album_matching(&mut self, name: &str) -> &mut Self {
+        self.set_matching(ObjectType::Album, name);
+        self
+    }
+
+    pub fn set_artist_matching(&mut self, name: &str) -> &mut Self {
+        self.set_matching(ObjectType::Artist, name);
+        self
+    }
+
+    pub fn set_track_matching(&mut self, name: &str) -> &mut Self {
+        self.set_matching(ObjectType::Track, name);
+        self
+    }
+
+    pub fn set_matching(&mut self, object_type: ObjectType, name: &str) -> &mut Self {
+        let query = format!("{}:{}", object_type.to_string(), name);
+        self.query.push(query);
+        self
+    }
+
+    pub fn set_year(&mut self, year: u64) -> &mut Self {
+        let query = format!("year:{}", year);
+        self.query.push(query);
+        self
+    }
+
+    pub fn set_year_range(&mut self, range: (u64, u64)) -> &mut Self {
+        let query = format!("{}-{}", range.0, range.1);
+        self.query.push(query);
+        self
+    }
+
+    pub async fn search_album(&mut self) -> Result<PagingObject<SimpleAlbum>, Box<dyn Error>> {
+        self.search(ObjectType::Album).await
+    }
+
+    pub async fn search_artist(&mut self) -> Result<PagingObject<Artist>, Box<dyn Error>> {
+        self.search(ObjectType::Artist).await
+    }
+
+    pub async fn search_playlist(
+        &mut self,
+    ) -> Result<PagingObject<SimplePlaylist>, Box<dyn Error>> {
+        self.search(ObjectType::Playlist).await
+    }
+
+    pub async fn search_track(&mut self) -> Result<PagingObject<Track>, Box<dyn Error>> {
+        self.search(ObjectType::Track).await
+    }
+
+    async fn search<T: DeserializeOwned + Clone>(
+        &mut self,
+        object_type: ObjectType,
+    ) -> Result<T, Box<dyn Error>> {
+        let builder = reqwest::Client::new()
+            .get("https://api.spotify.com/v1/search")
+            .query(&[("q", &self.to_query()), ("type", &object_type.to_string())]);
+
+        let response = self
+            .client
+            .set_limit(self.limit)
+            .set_offset(self.offset)
+            .set_market(self.market)
+            .send(builder)
+            .await?
+            .unwrap();
+
+        let mut value: serde_json::Value = serde_json::from_str(&response.text().await?).unwrap();
+        let key = format!("{}s", object_type.to_string());
+
+        Ok(serde_json::from_value(value[key].take())?)
+    }
+
+    fn to_query(&self) -> String {
+        self.query.join(" ")
+    }
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum ObjectType {
     Album,
     Artist,
@@ -12,134 +118,13 @@ pub enum ObjectType {
     Track,
 }
 
-impl fmt::Display for ObjectType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
+impl std::fmt::Display for ObjectType {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
             ObjectType::Album => write!(f, "album"),
             ObjectType::Artist => write!(f, "artist"),
             ObjectType::Playlist => write!(f, "playlist"),
             ObjectType::Track => write!(f, "track"),
         }
-    }
-}
-
-impl From<&str> for ObjectType {
-    fn from(value: &str) -> Self {
-        match value {
-            "album" => ObjectType::Album,
-            "artist" => ObjectType::Album,
-            "playlist" => ObjectType::Playlist,
-            "track" => ObjectType::Track,
-            _ => ObjectType::Album,
-        }
-    }
-}
-
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub struct SearchQuery {
-    pub query: Vec<String>,
-    pub object_type: ObjectType,
-}
-
-impl SearchQuery {
-    pub fn new(object_type: &str) -> Self {
-        SearchQuery {
-            query: Vec::new(),
-            object_type: ObjectType::from(object_type),
-        }
-    }
-
-    pub fn set_keyword(&mut self, keyword: &str) {
-        self.query.push(keyword.to_string());
-    }
-
-    pub fn set_album_matching(&mut self, name: &str) {
-        self.set_matching(ObjectType::Album, name);
-    }
-
-    pub fn set_artist_matching(&mut self, name: &str) {
-        self.set_matching(ObjectType::Artist, name);
-    }
-
-    pub fn set_track_matching(&mut self, name: &str) {
-        self.set_matching(ObjectType::Track, name);
-    }
-
-    pub fn set_matching(&mut self, object_type: ObjectType, name: &str) {
-        let query = format!("{}:{}", object_type.to_string(), name);
-        self.query.push(query);
-    }
-
-    pub fn set_year(&mut self, year: u64) {
-        let query = format!("year:{}", year);
-        self.query.push(query);
-    }
-
-    pub fn set_year_range(&mut self, range: (u64, u64)) {
-        let query = format!("{}-{}", range.0, range.1);
-        self.query.push(query);
-    }
-
-    pub fn to_query(&self) -> String {
-        self.query.join(" ")
-    }
-}
-
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
-pub struct SearchClient {
-    access_token: String,
-    refresh_token: String,
-}
-
-impl Client for SearchClient {
-    fn get_access_token(&self) -> String {
-        self.access_token.to_string()
-    }
-
-    fn get_refresh_token(&self) -> String {
-        self.refresh_token.to_string()
-    }
-
-    fn set_access_token(&mut self, access_token: &str) -> &mut Client {
-        self.access_token = access_token.to_string();
-        self
-    }
-}
-
-impl SearchClient {
-    pub fn new(access_token: &str, refresh_token: &str) -> Self {
-        SearchClient {
-            access_token: access_token.to_string(),
-            refresh_token: refresh_token.to_string(),
-        }
-    }
-
-    pub fn search<T: DeserializeOwned + Clone>(
-        &mut self,
-        query: SearchQuery,
-        market: Option<CountryCode>,
-        limit: Option<u32>,
-        offset: Option<u32>,
-    ) -> PagingObjectWrapper<T> {
-        let mut params = generate_params(limit, offset);
-        let q = &query.to_query();
-        params.push(("q", q.to_string()));
-        let object_type = &query.object_type;
-        params.push(("type", object_type.to_string()));
-        let market = market.map_or("from_token".to_string(), |v| v.alpha2().to_string());
-        params.push(("market", market));
-        let request = reqwest::Client::new()
-            .get("https://api.spotify.com/v1/search")
-            .query(&params);
-        let mut response = self.send(request).unwrap();
-        let json = response.text().unwrap();
-        let key = format!("{}s", object_type.to_string());
-        let paging_object: PagingObject<T> = get_value(&json, &key).unwrap();
-
-        PagingObjectWrapper::new(
-            paging_object,
-            &self.get_access_token(),
-            &self.get_refresh_token(),
-        )
     }
 }
