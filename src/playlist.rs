@@ -137,7 +137,7 @@ impl PlaylistClient {
             public: Some(request.public),
             ..Default::default()
         };
-self.change_detail(request).await
+        self.change_detail(request).await
     }
 
     pub async fn change_collaborative(

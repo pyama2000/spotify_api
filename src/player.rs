@@ -62,7 +62,8 @@ impl PlayerClient {
 
     pub async fn get_currently_playing_track(
         &mut self,
-        request: GetCurrentlyRequest,) -> Result<Option<CurrentlyPlayingObject>, Box<dyn Error>> {
+        request: GetCurrentlyRequest,
+    ) -> Result<Option<CurrentlyPlayingObject>, Box<dyn Error>> {
         self.get_current(
             "https://api.spotify.com/v1/me/player/currently-playing",
             request,
