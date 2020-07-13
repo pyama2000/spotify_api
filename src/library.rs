@@ -3,23 +3,23 @@ use std::error::Error;
 use chrono::{DateTime, Utc};
 use futures::future::{BoxFuture, FutureExt};
 use isocountry::CountryCode;
-use serde::{de::DeserializeOwned, Deserialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::json;
 
 use crate::{album::Album, object::PagingObject, track::Track, RequestClient};
 
-#[derive(Clone, Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct SavedAlbum {
     added_at: Option<DateTime<Utc>>,
     album: Album,
 }
 
-#[derive(Clone, Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct SavedShow {
     added_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Clone, Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct SavedTrack {
     added_at: Option<DateTime<Utc>>,
     track: Track,

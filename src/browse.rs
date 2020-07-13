@@ -2,7 +2,7 @@ use std::{error::Error, fmt};
 
 use chrono::{DateTime, Utc};
 use isocountry::CountryCode;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     album::SimpleAlbum,
@@ -12,7 +12,7 @@ use crate::{
     RequestClient,
 };
 
-#[derive(Clone, Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Category {
     pub href: String,
     pub icons: Vec<Image>,
@@ -438,13 +438,13 @@ impl GetRecommendationsRequest {
     }
 }
 
-#[derive(Clone, Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct GetRecommendationsResponse {
     pub seeds: Vec<RecommendationSeed>,
     pub tracks: Vec<SimpleTrack>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum TrackAttribute {
     Acousticness(f32),
     Danceability(f32),
@@ -506,7 +506,7 @@ impl fmt::Display for TrackAttribute {
     }
 }
 
-#[derive(Clone, Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RecommendationSeed {
     pub after_filtering_size: u32,
