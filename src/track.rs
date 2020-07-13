@@ -2,11 +2,11 @@ use std::error::Error;
 
 use futures::future::{BoxFuture, FutureExt};
 use isocountry::CountryCode;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{album::SimpleAlbum, artist::SimpleArtist, RequestClient};
 
-#[derive(Clone, Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Track {
     pub album: Option<SimpleAlbum>,
     pub artists: Vec<SimpleArtist>,
@@ -27,7 +27,7 @@ pub struct Track {
     pub is_local: bool,
 }
 
-#[derive(Clone, Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct SimpleTrack {
     pub artists: Vec<SimpleArtist>,
     pub available_markets: Option<Vec<String>>,

@@ -2,7 +2,7 @@ use std::error::Error;
 
 use futures::future::{BoxFuture, FutureExt};
 use isocountry::CountryCode;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     artist::SimpleArtist,
@@ -11,7 +11,7 @@ use crate::{
     RequestClient,
 };
 
-#[derive(Clone, Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Album {
     pub album_type: String,
     pub artists: Vec<SimpleArtist>,
@@ -31,7 +31,7 @@ pub struct Album {
     pub uri: String,
 }
 
-#[derive(Clone, Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct SimpleAlbum {
     pub album_group: Option<String>,
     pub album_type: String,

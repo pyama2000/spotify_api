@@ -62,8 +62,7 @@ impl PlayerClient {
 
     pub async fn get_currently_playing_track(
         &mut self,
-        request: GetCurrentlyRequest,
-    ) -> Result<Option<CurrentlyPlayingObject>, Box<dyn Error>> {
+        request: GetCurrentlyRequest,) -> Result<Option<CurrentlyPlayingObject>, Box<dyn Error>> {
         self.get_current(
             "https://api.spotify.com/v1/me/player/currently-playing",
             request,
@@ -417,7 +416,6 @@ impl Default for DeviceType {
 pub struct Context {
     uri: String,
     href: Option<String>,
-    // external_urls: Option<ExternalURL>,
     #[serde(rename = "type")]
     pub device_type: String,
 }
