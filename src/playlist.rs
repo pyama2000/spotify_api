@@ -4,7 +4,7 @@ use chrono::{DateTime, Utc};
 use futures::future::{BoxFuture, FutureExt};
 use isocountry::CountryCode;
 use reqwest::header::{HeaderMap, CONTENT_TYPE};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 use crate::{
@@ -14,7 +14,7 @@ use crate::{
     RequestClient,
 };
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Playlist {
     pub collaborative: bool,
     pub description: Option<String>,
@@ -32,7 +32,7 @@ pub struct Playlist {
     pub uri: String,
 }
 
-#[derive(Clone, Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct SimplePlaylist {
     pub collaborative: bool,
     pub description: Option<String>,
@@ -48,7 +48,7 @@ pub struct SimplePlaylist {
     pub uri: String,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct PlaylistTrack {
     pub added_at: DateTime<Utc>,
     pub added_by: User,
@@ -137,8 +137,7 @@ impl PlaylistClient {
             public: Some(request.public),
             ..Default::default()
         };
-
-        self.change_detail(request).await
+self.change_detail(request).await
     }
 
     pub async fn change_collaborative(

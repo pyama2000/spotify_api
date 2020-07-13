@@ -1,13 +1,13 @@
 use std::error::Error;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     object::{Follower, Image},
     RequestClient,
 };
 
-#[derive(Clone, Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct User {
     pub birthdate: Option<String>,
     pub country: Option<String>,

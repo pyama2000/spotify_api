@@ -5,7 +5,7 @@ use dotenv::dotenv;
 use failure::Error;
 use rand::{self, distributions::Alphanumeric, Rng};
 use reqwest;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Default)]
 struct Credential {
@@ -129,7 +129,7 @@ impl SpotifyOAuth {
     }
 }
 
-#[derive(Clone, Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct RequestTokenResponse {
     pub access_token: String,
     pub refresh_token: String,
@@ -159,7 +159,7 @@ pub async fn request_tokens(code: &str) -> Result<RequestTokenResponse, Error> {
     Ok(response.json().await.expect("parse error"))
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct RefreshTokenResponse {
     pub access_token: String,
 }
