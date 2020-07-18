@@ -213,6 +213,7 @@ impl PlayerClient {
     pub async fn start(&mut self, request: Option<StartRequest>) -> Result<(), Box<dyn Error>> {
         let mut headers = HeaderMap::new();
         headers.insert(CONTENT_TYPE, "application/json".parse().unwrap());
+        headers.insert(CONTENT_LENGTH, "0".parse().unwrap());
 
         let mut builder = reqwest::Client::new()
             .put("https://api.spotify.com/v1/me/player/play")
