@@ -98,8 +98,8 @@ impl RequestClient {
                     self.access_token = refresh_access_token(&self.refresh_token).await?;
                 }
                 _ => {
-                    // dbg!(&response);
-                    // dbg!(&response.text().await?);
+                    dbg!(&response);
+                    dbg!(&response.text().await?);
                     return Ok(None);
                 }
             }
