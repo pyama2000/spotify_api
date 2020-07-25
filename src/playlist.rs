@@ -110,8 +110,8 @@ impl PlaylistClient {
                 .json(&json);
 
             let response = self.client.send(builder).await?.unwrap();
-            let mut result = response.json().await?;
-            results.append(&mut result);
+            let result = response.json().await?;
+            results.push(result);
 
             Ok(results)
         }
