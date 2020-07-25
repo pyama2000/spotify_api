@@ -14,13 +14,17 @@ mod playlist {
 
         let mut client = PlaylistClient::new(&access_token, &refresh_token);
 
+        let mut uris = Vec::new();
+        while uris.len() < 100 {
+            uris.push("spotify:track:4iV5W9uYEdYUVa79Axb7Rh".to_string());
+            uris.push("spotify:track:1301WleyT98MSxVHPZCA6M".to_string());
+            uris.push("spotify:episode:512ojhOuo1ktJprKbVcKyQ".to_string());
+        }
+        dbg!(uris.len());
+
         let request = AddItemsRequest {
             playlist_id: "3PJeEBUHSVRa1rJ6KOP30H".to_string(),
-            uris: vec![
-                "spotify:track:4iV5W9uYEdYUVa79Axb7Rh".to_string(),
-                "spotify:track:1301WleyT98MSxVHPZCA6M".to_string(),
-                "spotify:episode:512ojhOuo1ktJprKbVcKyQ".to_string(),
-            ],
+            uris,
             ..Default::default()
         };
 
